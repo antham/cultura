@@ -1,6 +1,7 @@
 use structopt::StructOpt;
 
 mod reddit;
+mod wikipedia;
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -18,12 +19,18 @@ struct Cultura {
 enum Provider {
     #[structopt(about = "Get fact from the sub todayilearned on reddit")]
     TIL {},
+    #[structopt(about = "Get fact from the do you know section of Wikipedia")]
+    DYK {},
 }
 
 fn main() {
     let a = Cultura::from_args();
     match a.subcmd {
         Provider::TIL {} => match reddit::get_til_facts() {
+            Ok(v) => println!("{}", v.first().unwrap()),
+            Err(e) => println!("{}", e),
+        },
+        Provider::DYK {} => match wikipedia::get_dyk_facts() {
             Ok(v) => println!("{}", v.first().unwrap()),
             Err(e) => println!("{}", e),
         },
