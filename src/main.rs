@@ -23,18 +23,16 @@ struct Cultura {
 
 #[derive(StructOpt, Debug)]
 enum Command {
-    #[structopt(name = "provider")]
-    ProviderRoot(Provider),
-    #[structopt(name = "daemon")]
+    #[structopt(name = "fact", about = "Manage fact")]
+    FactRoot(Fact),
+    #[structopt(name = "daemon", about = "Run the daemon harvesting facts")]
     DaemonRoot(Daemon),
 }
 
 #[derive(StructOpt, Debug)]
-enum Provider {
-    #[structopt(about = "Get fact from the sub todayilearned on reddit")]
-    TIL {},
-    #[structopt(about = "Get fact from the do you know section of Wikipedia")]
-    DYK {},
+enum Fact {
+    #[structopt(about = "Generate a random fact")]
+    GenerateRandom {},
 }
 
 #[derive(StructOpt, Debug)]
@@ -47,12 +45,8 @@ fn main() {
     let fact = db::Fact::new(DATABASE_NAME);
     let a = Cultura::from_args();
     match a.command {
-        Command::ProviderRoot(provider) => match provider {
-            Provider::TIL {} => match fact.get_random_fact("til") {
-                Some(s) => println!("{}", s),
-                None => (),
-            },
-            Provider::DYK {} => match fact.get_random_fact("dyk") {
+        Command::FactRoot(provider) => match provider {
+            Fact::GenerateRandom {} => match fact.get_random_fact() {
                 Some(s) => println!("{}", s),
                 None => (),
             },
