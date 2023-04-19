@@ -46,16 +46,19 @@ impl Fact {
                 "SELECT fact FROM facts WHERE was_displayed = 0 ORDER BY created_at DESC LIMIT 1",
             )
             .unwrap();
-        let result = stmt
-            .query_map([(provider)], |row: &Row| {
-                Ok(row.get::<usize, String>(0).unwrap())
-            })
-            .unwrap()
-            .next()
-            .unwrap();
-        match result {
-            Ok(s) => Some(s),
-            _ => None,
+        let result = stmt.query_map([], |row: &Row| Ok(row.get::<usize, String>(0).unwrap()));
+
+        if result.is_ok() {
+            result
+                .unwrap()
+                .next()
+                .map(|r| match r {
+                    Ok(s) => Some(s),
+                    Err(_) => None,
+                })
+                .flatten()
+        } else {
+            None
         }
     }
 }
