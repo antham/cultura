@@ -15,6 +15,7 @@ pub fn get_til_facts() -> Result<Vec<String>, String> {
                     e.text()
                         .into_iter()
                         .fold(String::new(), |acc: String, e: &str| acc.to_owned() + e)
+                        .replace("TIL", "Today I learned")
                 })
                 .collect::<Vec<String>>())
         }
