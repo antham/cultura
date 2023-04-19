@@ -73,10 +73,13 @@ fn main() {
                 scheduler.every(10.seconds()).run(|| update_facts());
 
                 match daemonize.start() {
-                    Ok(_) => loop {
-                        scheduler.run_pending();
-                        thread::sleep(Duration::from_secs(60 * 5));
-                    },
+                    Ok(_) => {
+                        update_facts();
+                        loop {
+                            scheduler.run_pending();
+                            thread::sleep(Duration::from_secs(60 * 5));
+                        }
+                    }
                     Err(_) => (),
                 }
             }
