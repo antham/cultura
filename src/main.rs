@@ -48,7 +48,7 @@ fn main() {
         Command::FactRoot(provider) => match provider {
             Fact::GenerateRandom {} => match fact.get_random_fact() {
                 Some((id, data)) => {
-                    fact.update_fact_as_read(id);
+                    fact.mark_as_read(id);
                     println!("{}", data)
                 }
                 None => (),

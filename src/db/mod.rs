@@ -58,7 +58,7 @@ impl Fact {
         }
     }
 
-    pub fn update_fact_as_read(&self, id: String) -> Result<usize, rusqlite::Error> {
+    pub fn mark_as_read(&self, id: String) -> Result<usize, rusqlite::Error> {
         self.connection
             .execute("UPDATE facts SET was_displayed = 1 WHERE id = ?1", [(id)])
     }
