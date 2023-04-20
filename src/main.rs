@@ -1,4 +1,5 @@
 use clokwerk::{Scheduler, TimeUnits};
+use colored::Colorize;
 use daemonize::Daemonize;
 use std::{fs::File, thread, time::Duration};
 use structopt::StructOpt;
@@ -48,8 +49,18 @@ fn main() {
         Command::FactRoot(provider) => match provider {
             Fact::GenerateRandom {} => match fact.get_random_fact() {
                 Some((id, data)) => {
-                    fact.mark_as_read(id);
-                    println!("{}", data)
+                    match fact.mark_as_read(id) {
+                        _ => (),
+                    };
+                    println!(
+                        r"{}
+
+{} {}
+",
+                        "Cultura".magenta().bold(),
+                        "|>".cyan(),
+                        data.yellow()
+                    )
                 }
                 None => (),
             },
