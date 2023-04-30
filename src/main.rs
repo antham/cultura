@@ -3,6 +3,7 @@ use structopt::StructOpt;
 mod db;
 mod reddit;
 mod services;
+mod shell;
 mod wikipedia;
 
 #[derive(StructOpt, Debug)]
@@ -59,9 +60,9 @@ fn main() {
             Daemon::Start {} => services::start_daemon(),
         },
         Command::InitRoot(shell) => match shell {
-            Shell::Fish {} => services::generate_fish_config(),
-            Shell::Bash {} => services::generate_bash_config(),
-            Shell::Zsh {} => services::generate_zsh_config(),
+            Shell::Fish {} => shell::generate_fish_config(),
+            Shell::Bash {} => shell::generate_bash_config(),
+            Shell::Zsh {} => shell::generate_zsh_config(),
         },
     }
 }
