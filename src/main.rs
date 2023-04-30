@@ -8,7 +8,7 @@ mod wikipedia;
 #[derive(StructOpt, Debug)]
 #[structopt(
     name = "cultura",
-    about = "Improve your culture day by day",
+    about = "Improve your culture day after day",
     author = "Anthony HAMON <hamon.anth@gmail.com>",
     version = "0.0.1"
 )]
