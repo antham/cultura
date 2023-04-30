@@ -23,6 +23,8 @@ enum Command {
     FactRoot(Fact),
     #[structopt(name = "daemon", about = "Run the daemon harvesting facts")]
     DaemonRoot(Daemon),
+    #[structopt(name = "init", about = "Generate the shell configuration")]
+    InitRoot(Shell),
 }
 
 #[derive(StructOpt, Debug)]
@@ -37,6 +39,12 @@ enum Daemon {
     Start {},
 }
 
+#[derive(StructOpt, Debug)]
+enum Shell {
+    #[structopt(about = "Generate a fish config")]
+    Fish {},
+}
+
 fn main() {
     let a = Cultura::from_args();
     match a.command {
@@ -45,6 +53,9 @@ fn main() {
         },
         Command::DaemonRoot(daemon) => match daemon {
             Daemon::Start {} => services::start_daemon(),
+        },
+        Command::InitRoot(shell) => match shell {
+            Shell::Fish {} => services::generate_fish_config(),
         },
     }
 }

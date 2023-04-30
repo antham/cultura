@@ -7,6 +7,39 @@ use std::{
     time::Duration,
 };
 
+#[derive(Clone)]
+struct ConfigResolver {
+    home_dir: String,
+}
+
+impl ConfigResolver {
+    fn new() -> Result<ConfigResolver, ()> {
+        match home::home_dir() {
+            Some(path) => {
+                let c = ConfigResolver {
+                    home_dir: path.display().to_string(),
+                };
+                match DirBuilder::new()
+                    .recursive(true)
+                    .create(c.get_root_config_path())
+                {
+                    Ok(_) => Ok(c),
+                    Err(_) => Err(()),
+                }
+            }
+            None => Err(()),
+        }
+    }
+
+    fn get_root_config_path(&self) -> String {
+        format!("{}/.config/cultura", self.home_dir)
+    }
+
+    fn resolve_relative_path(&self, path: &str) -> String {
+        format!("{}/{}", self.get_root_config_path(), path)
+    }
+}
+
 const DATABASE_NAME: &str = "cultura.db";
 
 pub fn generate_random_fact() {
@@ -81,35 +114,13 @@ fn update_facts(database_path: &str) {
     }
 }
 
-#[derive(Clone)]
-struct ConfigResolver {
-    home_dir: String,
-}
-
-impl ConfigResolver {
-    fn new() -> Result<ConfigResolver, ()> {
-        match home::home_dir() {
-            Some(path) => {
-                let c = ConfigResolver {
-                    home_dir: path.display().to_string(),
-                };
-                match DirBuilder::new()
-                    .recursive(true)
-                    .create(c.get_root_config_path())
-                {
-                    Ok(_) => Ok(c),
-                    Err(_) => Err(()),
-                }
-            }
-            None => Err(()),
-        }
-    }
-
-    fn get_root_config_path(&self) -> String {
-        format!("{}/.config/cultura", self.home_dir)
-    }
-
-    fn resolve_relative_path(&self, path: &str) -> String {
-        format!("{}/{}", self.get_root_config_path(), path)
-    }
+pub fn generate_fish_config() {
+    print!(
+        r#"
+function fish_greeting
+   cultura daemon start
+   cultura fact generate-random
+end
+"#
+    )
 }
