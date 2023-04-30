@@ -124,3 +124,12 @@ end
 "#
     )
 }
+
+pub fn generate_bash_config() {
+    print!(
+        r#"
+cultura daemon start
+cultura fact generate-random
+"#
+    )
+}

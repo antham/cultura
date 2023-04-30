@@ -43,6 +43,8 @@ enum Daemon {
 enum Shell {
     #[structopt(about = "Generate a fish config")]
     Fish {},
+    #[structopt(about = "Generate a bash config")]
+    Bash {},
 }
 
 fn main() {
@@ -56,6 +58,7 @@ fn main() {
         },
         Command::InitRoot(shell) => match shell {
             Shell::Fish {} => services::generate_fish_config(),
+            Shell::Bash {} => services::generate_bash_config(),
         },
     }
 }
