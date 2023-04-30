@@ -133,3 +133,12 @@ cultura fact generate-random
 "#
     )
 }
+
+pub fn generate_zsh_config() {
+    print!(
+        r#"
+cultura daemon start
+cultura fact generate-random
+"#
+    )
+}

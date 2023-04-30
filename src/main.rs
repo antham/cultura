@@ -45,6 +45,8 @@ enum Shell {
     Fish {},
     #[structopt(about = "Generate a bash config")]
     Bash {},
+    #[structopt(about = "Generate a zsh config")]
+    Zsh {},
 }
 
 fn main() {
@@ -59,6 +61,7 @@ fn main() {
         Command::InitRoot(shell) => match shell {
             Shell::Fish {} => services::generate_fish_config(),
             Shell::Bash {} => services::generate_bash_config(),
+            Shell::Zsh {} => services::generate_zsh_config(),
         },
     }
 }
