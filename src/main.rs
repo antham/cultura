@@ -1,8 +1,10 @@
 use structopt::StructOpt;
 
+mod config;
+mod daemon;
 mod db;
+mod fact;
 mod reddit;
-mod services;
 mod shell;
 mod wikipedia;
 
@@ -54,10 +56,12 @@ fn main() {
     let a = Cultura::from_args();
     match a.command {
         Command::FactRoot(provider) => match provider {
-            Fact::GenerateRandom {} => services::generate_random_fact(),
+            Fact::GenerateRandom {} => fact::generate_random(),
         },
         Command::DaemonRoot(daemon) => match daemon {
-            Daemon::Start {} => services::start_daemon(),
+            Daemon::Start {} => {
+                daemon::Daemon::new().start();
+            }
         },
         Command::InitRoot(shell) => match shell {
             Shell::Fish {} => shell::generate_fish_config(),
