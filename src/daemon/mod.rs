@@ -1,9 +1,14 @@
 use std::{fs::File, thread, time::Duration};
 
-use clokwerk::{Scheduler, TimeUnits};
 use daemonize::Daemonize;
 
 use crate::config::{self, ConfigResolver};
+
+const PID_FILE: &str = "cultura.pid";
+const WORKING_DIRECTORY: &str = "/tmp";
+const STDOUT_FILE: &str = "/dev/null";
+const STDERR_FILE: &str = "/dev/null";
+const SCHEDULER_INTERVAL_AS_MINUTES: u64 = 5;
 
 pub struct Daemon<'a> {
     daemonize: Daemonize<&'a str>,
@@ -14,16 +19,12 @@ impl<'a> Daemon<'a> {
     pub fn new() -> Daemon<'a> {
         let config_resolver = config::ConfigResolver::new().unwrap();
 
-        let stdout = File::create("/dev/null").unwrap();
-        let stderr = File::create("/dev/null").unwrap();
+        let stdout = File::create(STDOUT_FILE).unwrap();
+        let stderr = File::create(STDERR_FILE).unwrap();
 
         let daemonize = Daemonize::new()
-            .pid_file(
-                config_resolver
-                    .resolve_relative_path("cultura.pid")
-                    .as_str(),
-            )
-            .working_directory("/tmp")
+            .pid_file(config_resolver.resolve_relative_path(PID_FILE).as_str())
+            .working_directory(WORKING_DIRECTORY)
             .stdout(stdout)
             .stderr(stderr)
             .privileged_action(|| "Executed before drop privileges");
@@ -34,22 +35,11 @@ impl<'a> Daemon<'a> {
     }
 
     pub fn start(self) {
-        let mut scheduler = Scheduler::new();
-
-        let database_path = self.config_resolver.get_database_path();
-
-        scheduler
-            .every(10.seconds())
-            .run(move || update_facts(database_path.to_owned()));
-
         match self.daemonize.start() {
-            Ok(_) => {
+            Ok(_) => loop {
                 update_facts(self.config_resolver.get_database_path());
-                loop {
-                    scheduler.run_pending();
-                    thread::sleep(Duration::from_secs(60 * 5));
-                }
-            }
+                thread::sleep(Duration::from_secs(60 * SCHEDULER_INTERVAL_AS_MINUTES));
+            },
             Err(_) => (),
         }
     }
