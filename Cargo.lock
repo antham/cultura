@@ -204,6 +204,7 @@ dependencies = [
  "colored",
  "daemonize",
  "home",
+ "log",
  "reqwest",
  "rusqlite",
  "scraper",

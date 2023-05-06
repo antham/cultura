@@ -5,6 +5,7 @@ mod config;
 mod daemon;
 mod db;
 mod fact;
+mod logger;
 mod reddit;
 mod shell;
 mod wikipedia;
@@ -19,6 +20,8 @@ mod wikipedia;
 struct Cultura {
     #[structopt(subcommand)]
     command: Command,
+    #[structopt(short, long, env = "ENABLE_LOG")]
+    enable_log: bool,
 }
 
 #[derive(StructOpt, Debug)]
@@ -55,18 +58,20 @@ enum Shell {
 
 fn main() {
     let a = Cultura::from_args();
-    let database_path = ConfigResolver::new().unwrap().get_database_path();
+    let database_path = ConfigResolver::new(a.enable_log)
+        .unwrap()
+        .get_database_path();
 
     match a.command {
         Command::FactRoot(provider) => match provider {
             Fact::GenerateRandom {} => {
-                fact::generate_random(database_path);
+                fact::print_random(database_path, a.enable_log);
                 ()
             }
         },
         Command::DaemonRoot(daemon) => match daemon {
             Daemon::Start {} => {
-                daemon::Daemon::new().start();
+                daemon::Daemon::new(a.enable_log).start();
             }
         },
         Command::InitRoot(shell) => match shell {

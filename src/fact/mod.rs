@@ -1,6 +1,19 @@
-pub fn generate_random(database_path: String) -> Result<Option<String>, String> {
-    let fact = crate::db::Fact::new(&database_path);
+use colored::Colorize;
 
+use crate::db::Fact;
+
+pub fn print_random(database_path: String, is_enabled: bool) {
+    let fact = crate::db::Fact::new(&database_path);
+    let logger = crate::logger::Logger::new(is_enabled);
+
+    match generate_random(fact) {
+        Ok(Some(f)) => output(f),
+        Ok(None) => logger.info("No result to resut"),
+        Err(e) => logger.error(&e),
+    }
+}
+
+fn generate_random(fact: Fact) -> Result<Option<String>, String> {
     match fact.get_random_fact() {
         Ok(Some((id, data))) => match fact.mark_as_read(id) {
             Ok(_) => Ok(Some(data)),
@@ -9,6 +22,18 @@ pub fn generate_random(database_path: String) -> Result<Option<String>, String> 
         Ok(None) => Ok(None),
         Err(e) => Err(e.to_string()),
     }
+}
+
+fn output(fact: String) {
+    println!(
+        r"{}
+
+{} {}
+",
+        "Cultura".magenta().bold(),
+        "|>".cyan(),
+        fact.yellow(),
+    )
 }
 
 #[cfg(test)]
@@ -30,15 +55,15 @@ mod tests {
 
         let mut facts: Vec<String> = vec![];
 
-        let f1 = generate_random(database_name.to_string());
+        let f1 = generate_random(crate::db::Fact::new(database_name));
         assert!(f1.is_ok());
         facts.push(f1.ok().unwrap().unwrap());
 
-        let f2 = generate_random(database_name.to_string());
+        let f2 = generate_random(crate::db::Fact::new(database_name));
         assert!(f2.is_ok());
         facts.push(f2.ok().unwrap().unwrap());
 
-        let f3 = generate_random(database_name.to_string());
+        let f3 = generate_random(crate::db::Fact::new(database_name));
         assert!(f3.is_ok());
         assert!(f3.ok().unwrap() == None);
     }

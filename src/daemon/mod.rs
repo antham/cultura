@@ -2,35 +2,35 @@ use std::{fs::File, thread, time::Duration};
 
 use daemonize::Daemonize;
 
-use crate::config::{self, ConfigResolver};
-
-const PID_FILE: &str = "cultura.pid";
-const WORKING_DIRECTORY: &str = "/tmp";
-const STDOUT_FILE: &str = "/dev/null";
-const STDERR_FILE: &str = "/dev/null";
-const SCHEDULER_INTERVAL_AS_MINUTES: u64 = 5;
+use crate::{
+    config::{self, ConfigResolver},
+    logger::{self, Logger},
+};
 
 pub struct Daemon<'a> {
     daemonize: Daemonize<&'a str>,
     config_resolver: ConfigResolver,
+    logger: Logger,
 }
 
 impl<'a> Daemon<'a> {
-    pub fn new() -> Daemon<'a> {
-        let config_resolver = config::ConfigResolver::new().unwrap();
+    pub fn new(enable_log: bool) -> Daemon<'a> {
+        let config_resolver = config::ConfigResolver::new(enable_log).unwrap();
+        let logger = logger::Logger::new(enable_log);
 
-        let stdout = File::create(STDOUT_FILE).unwrap();
-        let stderr = File::create(STDERR_FILE).unwrap();
+        let stdout = File::create(config_resolver.get_stdout_file()).unwrap();
+        let stderr = File::create(config_resolver.get_stderr_file()).unwrap();
 
         let daemonize = Daemonize::new()
-            .pid_file(config_resolver.resolve_relative_path(PID_FILE).as_str())
-            .working_directory(WORKING_DIRECTORY)
+            .pid_file(config_resolver.get_pid_file())
+            .working_directory(config_resolver.get_working_dir())
             .stdout(stdout)
             .stderr(stderr)
             .privileged_action(|| "Executed before drop privileges");
         Daemon {
             daemonize,
             config_resolver,
+            logger,
         }
     }
 
@@ -49,12 +49,14 @@ impl<'a> Daemon<'a> {
                             fact.create(id.to_string(), v);
                             ()
                         }
-                        Err(e) => println!("{}", e),
+                        Err(e) => self.logger.error(&e),
                     }
                 });
-                thread::sleep(Duration::from_secs(60 * SCHEDULER_INTERVAL_AS_MINUTES));
+                thread::sleep(Duration::from_secs(
+                    60 * self.config_resolver.get_scheduler_interval_as_minutes(),
+                ));
             },
-            Err(_) => (),
+            Err(e) => self.logger.error(&e),
         }
     }
 }
