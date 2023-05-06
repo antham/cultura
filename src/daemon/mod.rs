@@ -37,28 +37,24 @@ impl<'a> Daemon<'a> {
     pub fn start(self) {
         match self.daemonize.start() {
             Ok(_) => loop {
-                update_facts(self.config_resolver.get_database_path());
+                let fact = crate::db::Fact::new(&self.config_resolver.get_database_path());
+
+                let v: Vec<(&str, fn() -> Result<Vec<String>, String>)> = vec![
+                    ("til", crate::reddit::get_til_facts),
+                    ("dyk", crate::wikipedia::get_dyk_facts),
+                ];
+                v.iter().for_each(|(id, f)| -> () {
+                    match f() {
+                        Ok(v) => {
+                            fact.create(id.to_string(), v);
+                            ()
+                        }
+                        Err(e) => println!("{}", e),
+                    }
+                });
                 thread::sleep(Duration::from_secs(60 * SCHEDULER_INTERVAL_AS_MINUTES));
             },
             Err(_) => (),
         }
-    }
-}
-
-fn update_facts(database_path: String) {
-    let fact = crate::db::Fact::new(&database_path);
-    match crate::reddit::get_til_facts() {
-        Ok(v) => {
-            fact.create("til".to_string(), v);
-            ()
-        }
-        Err(e) => println!("{}", e),
-    }
-    match crate::wikipedia::get_dyk_facts() {
-        Ok(v) => {
-            fact.create("dyk".to_string(), v);
-            ()
-        }
-        Err(e) => println!("{}", e),
     }
 }
