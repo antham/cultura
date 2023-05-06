@@ -48,11 +48,17 @@ impl<'a> Daemon<'a> {
 fn update_facts(database_path: String) {
     let fact = crate::db::Fact::new(&database_path);
     match crate::reddit::get_til_facts() {
-        Ok(v) => fact.create("til".to_string(), v),
+        Ok(v) => {
+            fact.create("til".to_string(), v);
+            ()
+        }
         Err(e) => println!("{}", e),
     }
     match crate::wikipedia::get_dyk_facts() {
-        Ok(v) => fact.create("dyk".to_string(), v),
+        Ok(v) => {
+            fact.create("dyk".to_string(), v);
+            ()
+        }
         Err(e) => println!("{}", e),
     }
 }
