@@ -75,9 +75,9 @@ fn main() {
             }
         },
         Command::InitRoot(shell) => match shell {
-            Shell::Fish {} => shell::generate_fish_config(),
-            Shell::Bash {} => shell::generate_bash_config(),
-            Shell::Zsh {} => shell::generate_zsh_config(),
+            Shell::Fish {} => shell::generate_fish_config(a.enable_log),
+            Shell::Bash {} => shell::generate_bash_config(a.enable_log),
+            Shell::Zsh {} => shell::generate_zsh_config(a.enable_log),
         },
     }
 }
