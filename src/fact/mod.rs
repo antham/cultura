@@ -1,10 +1,13 @@
 use colored::Colorize;
 
-use crate::db::Fact;
+use crate::{config, db::Fact};
 
-pub fn print_random(database_path: String, is_enabled: bool) {
+pub fn print_random(log_enabled: bool) {
+    let database_path = config::ConfigResolver::new(log_enabled)
+        .unwrap()
+        .get_database_path();
     let fact = crate::db::Fact::new(&database_path);
-    let logger = crate::logger::Logger::new(is_enabled);
+    let logger = crate::logger::Logger::new(log_enabled);
 
     match generate_random(fact) {
         Ok(Some(f)) => output(f),

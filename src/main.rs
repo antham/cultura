@@ -1,4 +1,3 @@
-use config::ConfigResolver;
 use structopt::StructOpt;
 
 mod config;
@@ -58,21 +57,12 @@ enum Shell {
 
 fn main() {
     let a = Cultura::from_args();
-    let database_path = ConfigResolver::new(a.enable_log)
-        .unwrap()
-        .get_database_path();
-
     match a.command {
         Command::FactRoot(provider) => match provider {
-            Fact::GenerateRandom {} => {
-                fact::print_random(database_path, a.enable_log);
-                ()
-            }
+            Fact::GenerateRandom {} => fact::print_random(a.enable_log),
         },
         Command::DaemonRoot(daemon) => match daemon {
-            Daemon::Start {} => {
-                daemon::Daemon::new(a.enable_log).start();
-            }
+            Daemon::Start {} => daemon::Daemon::new(a.enable_log).start(),
         },
         Command::InitRoot(shell) => match shell {
             Shell::Fish {} => shell::generate_fish_config(a.enable_log),
