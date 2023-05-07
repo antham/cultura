@@ -38,7 +38,6 @@ impl<'a> Daemon<'a> {
         match self.daemonize.start() {
             Ok(_) => loop {
                 let fact = crate::db::Fact::new(&self.config_resolver.get_database_path());
-
                 let v: Vec<(&str, fn() -> Result<Vec<String>, String>)> = vec![
                     ("til", crate::reddit::get_til_facts),
                     ("dyk", crate::wikipedia::get_dyk_facts),
@@ -46,7 +45,12 @@ impl<'a> Daemon<'a> {
                 v.iter().for_each(|(id, f)| -> () {
                     match f() {
                         Ok(v) => {
-                            fact.create(id.to_string(), v);
+                            fact.create(id.to_string(), v)
+                                .iter()
+                                .for_each(|val| match val {
+                                    Ok(_) => (),
+                                    Err(e) => self.logger.error(&e),
+                                });
                             ()
                         }
                         Err(e) => self.logger.error(&e),
