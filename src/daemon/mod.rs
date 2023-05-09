@@ -1,6 +1,7 @@
 use std::{fs::File, thread, time::Duration};
 
 use daemonize::Daemonize;
+use regex::Regex;
 
 use crate::{config::ConfigResolver, db::Fact, logger::Logger};
 
@@ -54,8 +55,19 @@ impl<'a> Daemon<'a> {
                 v.iter().for_each(|(id, f)| -> () {
                     match f() {
                         Ok(v) => {
+                            let parens = Regex::new("\\(.+\\)").unwrap();
+                            let multi_space = Regex::new(r"\s+").unwrap();
+
                             self.fact
-                                .create(id.to_string(), v)
+                                .create(
+                                    id.to_string(),
+                                    v.iter()
+                                        .map(|s| parens.replace_all(s.as_str(), "").to_string())
+                                        .map(|s| {
+                                            multi_space.replace_all(s.as_str(), " ").to_string()
+                                        })
+                                        .collect::<Vec<String>>(),
+                                )
                                 .iter()
                                 .for_each(|val| match val {
                                     Ok(_) => (),
