@@ -6,16 +6,21 @@ pub struct Fact {
 }
 
 impl Fact {
-    pub fn new(path: &str) -> Self {
-        let f = Fact {
-            connection: Connection::open(path).unwrap(),
-        };
-        f.migrate();
-        f
+    pub fn new(path: &str) -> Result<Self, String> {
+        match Connection::open(path) {
+            Ok(connection) => {
+                let f = Fact { connection };
+                match f.migrate() {
+                    Ok(_) => Ok(f),
+                    Err(e) => Err(e),
+                }
+            }
+            Err(e) => Err(format!("cannot open {} : {}", path, e)),
+        }
     }
 
     fn migrate(&self) -> Result<(), String> {
-        let query = "CREATE TABLE facts (id TEXT UNIQUE, fact TEXT UNIQUE, provider TEXT, was_displayed TINYINT(1), created_at TEXT);";
+        let query = "CREATE TABLE IF NOT EXISTS facts (id TEXT UNIQUE, fact TEXT UNIQUE, provider TEXT, was_displayed TINYINT(1), created_at TEXT);";
         match self.connection.execute(query, ()) {
             Ok(_) => Ok(()),
             Err(e) => Err(e.to_string()),

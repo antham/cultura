@@ -6,7 +6,7 @@ pub fn print_random(log_enabled: bool) {
     let database_path = config::ConfigResolver::new(log_enabled)
         .unwrap()
         .get_database_path();
-    let fact = crate::db::Fact::new(&database_path);
+    let fact = crate::db::Fact::new(&database_path).unwrap();
     let logger = crate::logger::Logger::new(log_enabled);
 
     match generate_random(fact) {
@@ -50,7 +50,7 @@ mod tests {
         let database_name = "generate-random-fact";
 
         let _ = fs::remove_file(database_name);
-        let f = crate::db::Fact::new(database_name);
+        let f = crate::db::Fact::new(database_name).unwrap();
         f.create(
             "til".to_string(),
             vec!["fact1".to_string(), "fact2".to_string()],
@@ -58,15 +58,15 @@ mod tests {
 
         let mut facts: Vec<String> = vec![];
 
-        let f1 = generate_random(crate::db::Fact::new(database_name));
+        let f1 = generate_random(crate::db::Fact::new(database_name).unwrap());
         assert!(f1.is_ok());
         facts.push(f1.ok().unwrap().unwrap());
 
-        let f2 = generate_random(crate::db::Fact::new(database_name));
+        let f2 = generate_random(crate::db::Fact::new(database_name).unwrap());
         assert!(f2.is_ok());
         facts.push(f2.ok().unwrap().unwrap());
 
-        let f3 = generate_random(crate::db::Fact::new(database_name));
+        let f3 = generate_random(crate::db::Fact::new(database_name).unwrap());
         assert!(f3.is_ok());
         assert!(f3.ok().unwrap() == None);
     }
