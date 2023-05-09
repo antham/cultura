@@ -9,7 +9,7 @@ pub struct ConfigResolver {
 }
 
 impl ConfigResolver {
-    pub fn new(enable_debug: bool) -> Result<ConfigResolver, ()> {
+    pub fn new(enable_debug: bool) -> Result<ConfigResolver, String> {
         match home::home_dir() {
             Some(path) => {
                 let c = ConfigResolver {
@@ -21,10 +21,10 @@ impl ConfigResolver {
                     .create(c.get_root_config_path())
                 {
                     Ok(_) => Ok(c),
-                    Err(_) => Err(()),
+                    Err(e) => Err(format!("cannot create config file : {}", e)),
                 }
             }
-            None => Err(()),
+            None => Err("user home path cannot be found".to_string()),
         }
     }
 
@@ -66,5 +66,65 @@ impl ConfigResolver {
 
     pub fn get_scheduler_interval_as_minutes(&self) -> u64 {
         5
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use regex::Regex;
+
+    use super::*;
+
+    #[test]
+    fn test_config_resolver() {
+        {
+            let c = ConfigResolver::new(false);
+            match c {
+                Ok(config) => {
+                    assert!(config.enable_log == false);
+                    assert!(
+                        Regex::new(r"^/home/.*?/.config/cultura$")
+                            .unwrap()
+                            .is_match(&config.get_root_config_path()),
+                        "root_config_path = {}",
+                        &config.get_root_config_path(),
+                    );
+                    assert!(
+                        Regex::new(r"^/home/.*?/.config/cultura/cultura.db$")
+                            .unwrap()
+                            .is_match(&config.get_database_path()),
+                        "database_path = {}",
+                        &config.get_database_path(),
+                    );
+                    assert_eq!(&config.get_stdout_file(), "/dev/null");
+                    assert_eq!(&config.get_stderr_file(), "/dev/null");
+                }
+                Err(e) => panic!("{}", e),
+            }
+        }
+
+        {
+            let c = ConfigResolver::new(true);
+            match c {
+                Ok(config) => {
+                    assert!(config.enable_log == true);
+                    assert!(
+                        Regex::new(r"^/home/.*?/.config/cultura/stdout.log$")
+                            .unwrap()
+                            .is_match(&config.get_stdout_file()),
+                        "stdout_file = {}",
+                        &config.get_stdout_file(),
+                    );
+                    assert!(
+                        Regex::new(r"^/home/.*?/.config/cultura/stderr.log$")
+                            .unwrap()
+                            .is_match(&config.get_stderr_file()),
+                        "stderr_file = {}",
+                        &config.get_stderr_file(),
+                    );
+                }
+                Err(e) => panic!("{}", e),
+            }
+        }
     }
 }
