@@ -15,9 +15,9 @@ impl Logger {
         }
     }
 
-    pub fn error(&self, err: &dyn ToString) {
+    pub fn error<S: Into<String>>(&self, err: S) {
         if self.is_enabled {
-            error!("{}", err.to_string());
+            error!("{}", err.into());
         }
     }
 }

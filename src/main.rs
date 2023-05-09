@@ -1,3 +1,5 @@
+use std::process::exit;
+
 use structopt::StructOpt;
 
 mod config;
@@ -57,17 +59,51 @@ enum Shell {
 
 fn main() {
     let a = Cultura::from_args();
+
+    let logger = logger::Logger::new(a.enable_log);
+
+    let config_resolver_result = config::ConfigResolver::new(a.enable_log);
+    if config_resolver_result.is_err() {
+        logger.error(format!(
+            "cannot bootstrap the config: {}",
+            config_resolver_result.err().unwrap()
+        ));
+        exit(0);
+    }
+    let config_resolver = config_resolver_result.unwrap();
+
+    let fact_repository_result = crate::db::Fact::new(&config_resolver.get_database_path());
+    if fact_repository_result.is_err() {
+        logger.error(format!(
+            "cannot bootstrap the fact repository: {}",
+            fact_repository_result.err().unwrap()
+        ));
+        exit(0);
+    }
+    let fact_repository = fact_repository_result.unwrap();
+
     match a.command {
         Command::FactRoot(provider) => match provider {
-            Fact::GenerateRandom {} => fact::print_random(a.enable_log),
+            Fact::GenerateRandom {} => {
+                let f = fact::Fact::new(&logger, &fact_repository);
+                f.print_random();
+            }
         },
         Command::DaemonRoot(daemon) => match daemon {
-            Daemon::Start {} => daemon::Daemon::new(a.enable_log).start(),
+            Daemon::Start {} => {
+                match daemon::Daemon::new(&config_resolver, &logger, &fact_repository) {
+                    Ok(d) => d.start(),
+                    Err(e) => logger.error(format!("cannot start daemon: {}", e)),
+                }
+            }
         },
-        Command::InitRoot(shell) => match shell {
-            Shell::Fish {} => shell::generate_fish_config(a.enable_log),
-            Shell::Bash {} => shell::generate_bash_config(a.enable_log),
-            Shell::Zsh {} => shell::generate_zsh_config(a.enable_log),
-        },
+        Command::InitRoot(shell) => {
+            let s = shell::Shell::new(&config_resolver);
+            match shell {
+                Shell::Fish {} => s.generate_fish_config(),
+                Shell::Bash {} => s.generate_bash_config(),
+                Shell::Zsh {} => s.generate_zsh_config(),
+            }
+        }
     }
 }

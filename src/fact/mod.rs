@@ -1,47 +1,54 @@
 use colored::Colorize;
 
-use crate::{config, db::Fact};
+use crate::{db, logger::Logger};
 
-pub fn print_random(log_enabled: bool) {
-    let database_path = config::ConfigResolver::new(log_enabled)
-        .unwrap()
-        .get_database_path();
-    let fact = crate::db::Fact::new(&database_path).unwrap();
-    let logger = crate::logger::Logger::new(log_enabled);
-
-    match generate_random(fact) {
-        Ok(Some(f)) => output(f),
-        Ok(None) => logger.info("No result to resut"),
-        Err(e) => logger.error(&e),
-    }
+pub struct Fact<'a> {
+    logger: &'a Logger,
+    fact: &'a db::Fact,
 }
 
-fn generate_random(fact: Fact) -> Result<Option<String>, String> {
-    match fact.get_random_fact() {
-        Ok(Some((id, data))) => match fact.mark_as_read(id) {
-            Ok(_) => Ok(Some(data)),
+impl<'a> Fact<'a> {
+    pub fn new(logger: &'a Logger, fact: &'a db::Fact) -> Self {
+        Fact { logger, fact }
+    }
+
+    pub fn print_random(&self) {
+        match self.generate_random() {
+            Ok(Some(f)) => self.output(f),
+            Ok(None) => self.logger.info("No result to resut"),
+            Err(e) => self.logger.error(&e),
+        }
+    }
+
+    fn generate_random(&self) -> Result<Option<String>, String> {
+        match self.fact.get_random_fact() {
+            Ok(Some((id, data))) => match self.fact.mark_as_read(id) {
+                Ok(_) => Ok(Some(data)),
+                Err(e) => Err(e.to_string()),
+            },
+            Ok(None) => Ok(None),
             Err(e) => Err(e.to_string()),
-        },
-        Ok(None) => Ok(None),
-        Err(e) => Err(e.to_string()),
+        }
     }
-}
 
-fn output(fact: String) {
-    println!(
-        r"{}
+    fn output(&self, fact: String) {
+        println!(
+            r"{}
 
 {} {}
 ",
-        "Cultura".magenta().bold(),
-        "|>".cyan(),
-        fact.yellow(),
-    )
+            "Cultura".magenta().bold(),
+            "|>".cyan(),
+            fact.yellow(),
+        )
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use std::fs;
+
+    use crate::logger;
 
     use super::*;
 
@@ -55,18 +62,21 @@ mod tests {
             "til".to_string(),
             vec!["fact1".to_string(), "fact2".to_string()],
         );
+        let logger = logger::Logger::new(false);
+
+        let fact = Fact::new(&logger, &f);
 
         let mut facts: Vec<String> = vec![];
 
-        let f1 = generate_random(crate::db::Fact::new(database_name).unwrap());
+        let f1 = fact.generate_random();
         assert!(f1.is_ok());
         facts.push(f1.ok().unwrap().unwrap());
 
-        let f2 = generate_random(crate::db::Fact::new(database_name).unwrap());
+        let f2 = fact.generate_random();
         assert!(f2.is_ok());
         facts.push(f2.ok().unwrap().unwrap());
 
-        let f3 = generate_random(crate::db::Fact::new(database_name).unwrap());
+        let f3 = fact.generate_random();
         assert!(f3.is_ok());
         assert!(f3.ok().unwrap() == None);
     }

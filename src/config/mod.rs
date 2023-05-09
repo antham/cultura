@@ -67,6 +67,10 @@ impl ConfigResolver {
     pub fn get_scheduler_interval_as_minutes(&self) -> u64 {
         5
     }
+
+    pub fn is_log_enabled(&self) -> bool {
+        self.enable_log
+    }
 }
 
 #[cfg(test)]
