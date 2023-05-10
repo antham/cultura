@@ -6,7 +6,7 @@ Cultura helps you to improve your culture day after day by showing little fact t
 
 It could depend how bash is setup.
 
-At the top of your `.bashrc` file add :
+At the top of your `.bashrc` file add:
 
 ```
 eval "$(cultura init bash)"
@@ -14,7 +14,7 @@ eval "$(cultura init bash)"
 
 ## Fish
 
-In your fish config file add :
+In your fish config file add:
 
 ```
 cultura init fish | source
@@ -24,7 +24,7 @@ cultura init fish | source
 
 It could depend how zsh is setup.
 
-At the top of your `.zshrc` file add :
+At the top of your `.zshrc` file add:
 
 ```
 eval "$(cultura init zsh)"
