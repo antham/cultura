@@ -40,8 +40,8 @@ impl ConfigResolver {
         self.resolve_relative_path(DATABASE_NAME)
     }
 
-    pub fn get_pid_file(&self) -> &str {
-        "cultura.pid"
+    pub fn get_pid_file(&self) -> String {
+        self.resolve_relative_path("cultura.pid")
     }
 
     pub fn get_working_dir(&self) -> &str {
@@ -98,6 +98,13 @@ mod tests {
                             .unwrap()
                             .is_match(&config.get_database_path()),
                         "database_path = {}",
+                        &config.get_database_path(),
+                    );
+                    assert!(
+                        Regex::new(r"^/home/.*?/.config/cultura/cultura.pid$")
+                            .unwrap()
+                            .is_match(&config.get_pid_file()),
+                        "pid_file = {}",
                         &config.get_database_path(),
                     );
                     assert_eq!(&config.get_stdout_file(), "/dev/null");
