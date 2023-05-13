@@ -1,15 +1,15 @@
 use std::process::exit;
 
 use structopt::StructOpt;
+use third_part::{reddit::Reddit, wikipedia::Wikipedia, Crawler};
 
 mod config;
 mod daemon;
 mod db;
 mod fact;
 mod logger;
-mod reddit;
 mod shell;
-mod wikipedia;
+mod third_part;
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -72,6 +72,9 @@ fn main() {
     }
     let config_resolver = config_resolver_result.unwrap();
 
+    let third_part_services: Vec<Box<dyn Crawler>> =
+        vec![Box::new(Reddit::new()), Box::new(Wikipedia::new())];
+
     let fact_repository_result = crate::db::Fact::new(&config_resolver.get_database_path());
     if fact_repository_result.is_err() {
         logger.error(format!(
@@ -81,7 +84,7 @@ fn main() {
         exit(0);
     }
     let fact_repository = fact_repository_result.unwrap();
-    let fact_service = fact::Fact::new(&logger, &fact_repository);
+    let fact_service = fact::Fact::new(&logger, &fact_repository, third_part_services);
 
     match a.command {
         Command::FactRoot(provider) => match provider {

@@ -1,16 +1,25 @@
 use colored::Colorize;
 use regex::Regex;
 
-use crate::{db, logger::Logger};
+use crate::{db, logger::Logger, third_part::Crawler};
 
 pub struct Fact<'a> {
     logger: &'a Logger,
     fact: &'a db::Fact,
+    third_part_services: Vec<Box<dyn Crawler>>,
 }
 
 impl<'a> Fact<'a> {
-    pub fn new(logger: &'a Logger, fact: &'a db::Fact) -> Self {
-        Fact { logger, fact }
+    pub fn new(
+        logger: &'a Logger,
+        fact: &'a db::Fact,
+        third_part_services: Vec<Box<dyn Crawler>>,
+    ) -> Self {
+        Fact {
+            logger,
+            fact,
+            third_part_services,
+        }
     }
 
     pub fn print_random(&self) {
@@ -22,19 +31,15 @@ impl<'a> Fact<'a> {
     }
 
     pub fn update(&self) {
-        let v: Vec<(&str, fn() -> Result<Vec<String>, String>)> = vec![
-            ("til", crate::reddit::get_til_facts),
-            ("dyk", crate::wikipedia::get_dyk_facts),
-        ];
-        v.iter().for_each(|(id, f)| -> () {
-            match f() {
+        self.third_part_services.iter().for_each(|service| -> () {
+            match service.get_facts() {
                 Ok(v) => {
                     let parens = Regex::new("\\(.+\\)").unwrap();
                     let multi_space = Regex::new(r"\s+").unwrap();
 
                     self.fact
                         .create(
-                            id.to_string(),
+                            service.get_id(),
                             v.iter()
                                 .map(|s| parens.replace_all(s.as_str(), "").to_string())
                                 .map(|s| multi_space.replace_all(s.as_str(), " ").to_string())
@@ -95,8 +100,9 @@ mod tests {
             vec!["fact1".to_string(), "fact2".to_string()],
         );
         let logger = logger::Logger::new(false);
+        let third_part_services = vec![];
 
-        let fact = Fact::new(&logger, &f);
+        let fact = Fact::new(&logger, &f, third_part_services);
 
         let mut facts: Vec<String> = vec![];
 
