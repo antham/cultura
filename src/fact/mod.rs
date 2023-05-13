@@ -85,9 +85,52 @@ impl<'a> Fact<'a> {
 mod tests {
     use std::fs;
 
+    use rusqlite::Connection;
+
     use crate::logger;
 
     use super::*;
+
+    struct CrawlerMock {
+        facts: Vec<String>,
+    }
+
+    impl Crawler for CrawlerMock {
+        fn get_facts(&self) -> Result<Vec<String>, String> {
+            Ok(self.facts.to_owned())
+        }
+
+        fn get_id(&self) -> String {
+            "crawlermock".to_string()
+        }
+    }
+
+    #[test]
+    fn test_update() {
+        let database_name = "update-fact";
+
+        let _ = fs::remove_file(database_name);
+        let f = crate::db::Fact::new(database_name).unwrap();
+        let facts = vec![
+            "whatever (whatever whatever) 1".to_string(),
+            "whatever 2".to_string(),
+        ];
+        let logger = logger::Logger::new(false);
+        let third_part_services: Vec<Box<dyn Crawler>> = vec![Box::new(CrawlerMock { facts })];
+        let fact = Fact::new(&logger, &f, third_part_services);
+        fact.update();
+
+        let conn = Connection::open(database_name).unwrap();
+        let mut stmt = conn.prepare("SELECT * FROM facts").unwrap();
+        let mut rows = stmt.query([]).unwrap();
+        let row1 = rows.next().unwrap().unwrap();
+        assert_eq!("whatever 1", row1.get_unwrap::<usize, String>(1));
+        assert_eq!("crawlermock", row1.get_unwrap::<usize, String>(2));
+
+        let row2 = rows.next().unwrap().unwrap();
+        assert_eq!("whatever 2", row2.get_unwrap::<usize, String>(1));
+        assert_eq!("crawlermock", row2.get_unwrap::<usize, String>(2));
+    }
 
     #[test]
     fn test_generate_random() {
