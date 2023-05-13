@@ -21,8 +21,10 @@ jobs:
           key: test-cargo-registry
       - name: List
         run: find ./
-      - name: Run tests
+      - name: Run units/functionals tests
         run: cargo test --verbose
+      - name: Run e2e tests
+        run: ./e2e-test.sh
 
   build:
     strategy:
