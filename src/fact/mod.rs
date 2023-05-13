@@ -1,4 +1,5 @@
 use colored::Colorize;
+use regex::Regex;
 
 use crate::{db, logger::Logger};
 
@@ -18,6 +19,37 @@ impl<'a> Fact<'a> {
             Ok(None) => self.logger.info("No result to resut"),
             Err(e) => self.logger.error(&e),
         }
+    }
+
+    pub fn update(&self) {
+        let v: Vec<(&str, fn() -> Result<Vec<String>, String>)> = vec![
+            ("til", crate::reddit::get_til_facts),
+            ("dyk", crate::wikipedia::get_dyk_facts),
+        ];
+        v.iter().for_each(|(id, f)| -> () {
+            match f() {
+                Ok(v) => {
+                    let parens = Regex::new("\\(.+\\)").unwrap();
+                    let multi_space = Regex::new(r"\s+").unwrap();
+
+                    self.fact
+                        .create(
+                            id.to_string(),
+                            v.iter()
+                                .map(|s| parens.replace_all(s.as_str(), "").to_string())
+                                .map(|s| multi_space.replace_all(s.as_str(), " ").to_string())
+                                .collect::<Vec<String>>(),
+                        )
+                        .iter()
+                        .for_each(|val| match val {
+                            Ok(_) => (),
+                            Err(e) => self.logger.error(e.to_string()),
+                        });
+                    ()
+                }
+                Err(e) => self.logger.error(e.to_string()),
+            }
+        });
     }
 
     fn generate_random(&self) -> Result<Option<String>, String> {

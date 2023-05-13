@@ -81,17 +81,17 @@ fn main() {
         exit(0);
     }
     let fact_repository = fact_repository_result.unwrap();
+    let fact_service = fact::Fact::new(&logger, &fact_repository);
 
     match a.command {
         Command::FactRoot(provider) => match provider {
             Fact::GenerateRandom {} => {
-                let f = fact::Fact::new(&logger, &fact_repository);
-                f.print_random();
+                fact_service.print_random();
             }
         },
         Command::DaemonRoot(daemon) => match daemon {
             Daemon::Start {} => {
-                match daemon::Daemon::new(&config_resolver, &logger, &fact_repository) {
+                match daemon::Daemon::new(&config_resolver, &logger, &fact_service) {
                     Ok(d) => d.start(),
                     Err(e) => logger.error(format!("cannot start daemon: {}", e)),
                 }

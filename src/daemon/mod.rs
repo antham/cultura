@@ -1,15 +1,13 @@
 use std::{fs::File, thread, time::Duration};
 
 use daemonize::Daemonize;
-use regex::Regex;
 
-use crate::{config::ConfigResolver, db::Fact, logger::Logger};
+use crate::{config::ConfigResolver, fact::Fact, logger::Logger};
 
 pub struct Daemon<'a> {
-    daemonize: Daemonize<&'a str>,
     config_resolver: &'a ConfigResolver,
     logger: &'a Logger,
-    fact: &'a Fact,
+    fact: &'a Fact<'a>,
 }
 
 impl<'a> Daemon<'a> {
@@ -22,20 +20,11 @@ impl<'a> Daemon<'a> {
         let stderr_r = File::create(config_resolver.get_stderr_file());
 
         match (stdout_r, stderr_r) {
-            (Ok(stdout), Ok(stderr)) => {
-                let daemonize = Daemonize::new()
-                    .pid_file(config_resolver.get_pid_file())
-                    .working_directory(config_resolver.get_working_dir())
-                    .stdout(stdout)
-                    .stderr(stderr)
-                    .privileged_action(|| "Executed before drop privileges");
-                Ok(Daemon {
-                    daemonize,
-                    config_resolver,
-                    logger,
-                    fact,
-                })
-            }
+            (Ok(_), Ok(_)) => Ok(Daemon {
+                config_resolver,
+                logger,
+                fact,
+            }),
             (Err(e), Ok(_)) => Err(format!("cannot open stdout file: {}", e)),
             (Ok(_), Err(e)) => Err(format!("cannot open stderr file: {}", e)),
             (Err(out_e), Err(err_e)) => Err(format!(
@@ -45,39 +34,20 @@ impl<'a> Daemon<'a> {
         }
     }
 
-    pub fn start(self) {
-        match self.daemonize.start() {
-            Ok(_) => loop {
-                let v: Vec<(&str, fn() -> Result<Vec<String>, String>)> = vec![
-                    ("til", crate::reddit::get_til_facts),
-                    ("dyk", crate::wikipedia::get_dyk_facts),
-                ];
-                v.iter().for_each(|(id, f)| -> () {
-                    match f() {
-                        Ok(v) => {
-                            let parens = Regex::new("\\(.+\\)").unwrap();
-                            let multi_space = Regex::new(r"\s+").unwrap();
+    pub fn start(&self) {
+        let stdout = File::open(self.config_resolver.get_stdout_file()).unwrap();
+        let stderr = File::open(self.config_resolver.get_stderr_file()).unwrap();
 
-                            self.fact
-                                .create(
-                                    id.to_string(),
-                                    v.iter()
-                                        .map(|s| parens.replace_all(s.as_str(), "").to_string())
-                                        .map(|s| {
-                                            multi_space.replace_all(s.as_str(), " ").to_string()
-                                        })
-                                        .collect::<Vec<String>>(),
-                                )
-                                .iter()
-                                .for_each(|val| match val {
-                                    Ok(_) => (),
-                                    Err(e) => self.logger.error(e.to_string()),
-                                });
-                            ()
-                        }
-                        Err(e) => self.logger.error(e.to_string()),
-                    }
-                });
+        let d = Daemonize::new()
+            .pid_file(self.config_resolver.get_pid_file())
+            .working_directory(self.config_resolver.get_working_dir())
+            .stdout(stdout)
+            .stderr(stderr)
+            .privileged_action(|| "Executed before drop privileges");
+
+        match d.start() {
+            Ok(_) => loop {
+                self.fact.update();
                 thread::sleep(Duration::from_secs(
                     60 * self.config_resolver.get_scheduler_interval_as_minutes(),
                 ));
