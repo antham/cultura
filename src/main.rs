@@ -125,7 +125,9 @@ fn main() {
             }
         }
         Command::ConfigRoot(conf) => match conf {
-            Config::Dump {} => (),
+            Config::Dump {} => {
+                println!("{}", config_resolver.get_config())
+            }
             Config::SetProviders { providers } => {
                 config_resolver.set_providers(providers).unwrap();
                 println!("Option defined");

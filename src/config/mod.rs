@@ -1,10 +1,26 @@
 use serde::{Deserialize, Serialize};
-use std::fs::{self, DirBuilder};
+use std::{
+    fmt::{self, Display},
+    fs::{self, DirBuilder},
+};
 const DATABASE_NAME: &str = "cultura.db";
 
 #[derive(Serialize, Deserialize, Default, Clone)]
-struct Config {
+pub struct Config {
     providers: Option<Vec<String>>,
+}
+
+impl Display for Config {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "providers => {}",
+            match self.providers.clone() {
+                None => "<default value>".to_string(),
+                Some(providers) => providers.join(","),
+            }
+        )
+    }
 }
 
 #[derive(Clone, Default)]
@@ -64,6 +80,10 @@ impl ConfigResolver {
 
     pub fn resolve_relative_path(&self, path: &str) -> String {
         format!("{}/{}", self.get_root_config_path(), path)
+    }
+
+    pub fn get_config(&self) -> &Config {
+        &self.config
     }
 
     pub fn set_providers(&self, providers: Vec<String>) -> Result<(), std::io::Error> {
