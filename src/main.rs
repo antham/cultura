@@ -1,7 +1,7 @@
 use std::process::exit;
 
 use structopt::StructOpt;
-use third_part::{reddit::Reddit, wikipedia::Wikipedia, Crawler};
+use third_part::Crawler;
 
 mod config;
 mod daemon;
@@ -33,6 +33,8 @@ enum Command {
     DaemonRoot(Daemon),
     #[structopt(name = "init", about = "Generate the shell configuration")]
     InitRoot(Shell),
+    #[structopt(name = "config", about = "Manage the configuration of the app")]
+    ConfigRoot(Config),
 }
 
 #[derive(StructOpt, Debug)]
@@ -57,6 +59,14 @@ enum Shell {
     Zsh {},
 }
 
+#[derive(StructOpt, Debug)]
+enum Config {
+    #[structopt(about = "Define the providers to enable")]
+    SetProviders { providers: Vec<String> },
+    #[structopt(about = "Dump the current config")]
+    Dump {},
+}
+
 fn main() {
     let a = Cultura::from_args();
 
@@ -72,8 +82,14 @@ fn main() {
     }
     let config_resolver = config_resolver_result.unwrap();
 
-    let third_part_services: Vec<Box<dyn Crawler>> =
-        vec![Box::new(Reddit::new()), Box::new(Wikipedia::new())];
+    let third_part_services: Vec<Box<dyn Crawler>> = third_part::get_available_providers()
+        .into_iter()
+        .filter(|(k, _)| match config_resolver.get_providers() {
+            None => true,
+            Some(providers) => providers.contains(k),
+        })
+        .map(|(_, v)| v)
+        .collect::<Vec<Box<dyn Crawler>>>();
 
     let fact_repository_result = crate::db::Fact::new(&config_resolver.get_database_path());
     if fact_repository_result.is_err() {
@@ -108,5 +124,12 @@ fn main() {
                 Shell::Zsh {} => s.generate_zsh_config(),
             }
         }
+        Command::ConfigRoot(conf) => match conf {
+            Config::Dump {} => (),
+            Config::SetProviders { providers } => {
+                config_resolver.set_providers(providers).unwrap();
+                println!("Option defined");
+            }
+        },
     }
 }

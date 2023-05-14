@@ -1,27 +1,57 @@
-use std::fs::DirBuilder;
-
+use serde::{Deserialize, Serialize};
+use std::fs::{self, DirBuilder};
 const DATABASE_NAME: &str = "cultura.db";
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Default, Clone)]
+struct Config {
+    providers: Option<Vec<String>>,
+}
+
+#[derive(Clone, Default)]
 pub struct ConfigResolver {
     home_dir: String,
     enable_log: bool,
+    config: Config,
 }
 
 impl ConfigResolver {
     pub fn new(enable_debug: bool) -> Result<ConfigResolver, String> {
         match home::home_dir() {
             Some(path) => {
-                let c = ConfigResolver {
+                let mut c = ConfigResolver {
                     home_dir: path.display().to_string(),
                     enable_log: enable_debug,
+                    ..ConfigResolver::default()
                 };
+                let config_file_path = c.resolve_relative_path("config.toml");
+
+                if std::path::Path::new(&config_file_path).exists() {
+                    match fs::read_to_string(c.resolve_relative_path("config.toml")) {
+                        Ok(s) => match toml::from_str(s.as_str()) {
+                            Ok(config) => c.config = config,
+                            Err(e) => return Err(format!("cannot unserialize config file: {}", e)),
+                        },
+                        Err(e) => {
+                            return Err(format!(
+                                "an error occurred when reading config file: {}",
+                                e
+                            ))
+                        }
+                    };
+                } else {
+                    let config = Config::default();
+                    match save_config(config, &c) {
+                        Err(e) => return Err(format!("cannot create config file: {}", e)),
+                        _ => (),
+                    };
+                }
+
                 match DirBuilder::new()
                     .recursive(true)
                     .create(c.get_root_config_path())
                 {
                     Ok(_) => Ok(c),
-                    Err(e) => Err(format!("cannot create config file : {}", e)),
+                    Err(e) => Err(format!("cannot create config folder : {}", e)),
                 }
             }
             None => Err("user home path cannot be found".to_string()),
@@ -34,6 +64,12 @@ impl ConfigResolver {
 
     pub fn resolve_relative_path(&self, path: &str) -> String {
         format!("{}/{}", self.get_root_config_path(), path)
+    }
+
+    pub fn set_providers(&self, providers: Vec<String>) -> Result<(), std::io::Error> {
+        let mut c = self.config.clone();
+        c.providers = Some(providers);
+        save_config(c, self)
     }
 
     pub fn get_database_path(&self) -> String {
@@ -71,6 +107,15 @@ impl ConfigResolver {
     pub fn is_log_enabled(&self) -> bool {
         self.enable_log
     }
+
+    pub fn get_providers(&self) -> Option<Vec<String>> {
+        self.config.providers.clone()
+    }
+}
+
+fn save_config(config: Config, config_resolver: &ConfigResolver) -> Result<(), std::io::Error> {
+    let toml = toml::to_string(&config).unwrap();
+    fs::write(config_resolver.resolve_relative_path("config.toml"), toml)
 }
 
 #[cfg(test)]
