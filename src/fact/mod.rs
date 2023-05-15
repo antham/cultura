@@ -93,8 +93,6 @@ mod tests {
 
     use rusqlite::Connection;
 
-    use crate::logger;
-
     use super::*;
 
     struct CrawlerMock {
@@ -102,7 +100,7 @@ mod tests {
     }
 
     impl Crawler for CrawlerMock {
-        fn get_facts(&self) -> Result<Vec<String>, String> {
+        fn get_facts(&self) -> Result<Vec<String>, Box<dyn Error>> {
             Ok(self.facts.to_owned())
         }
 
@@ -121,10 +119,9 @@ mod tests {
             "whatever (whatever whatever) 1".to_string(),
             "whatever 2".to_string(),
         ];
-        let logger = logger::Logger::new(false);
         let third_part_services: Vec<Box<dyn Crawler>> = vec![Box::new(CrawlerMock { facts })];
-        let fact = Fact::new(&logger, &f, third_part_services);
-        fact.update();
+        let fact = Fact::new(&f, third_part_services);
+        fact.update().unwrap();
 
         let conn = Connection::open(database_name).unwrap();
         let mut stmt = conn.prepare("SELECT * FROM facts").unwrap();
@@ -148,10 +145,9 @@ mod tests {
             "til".to_string(),
             vec!["fact1".to_string(), "fact2".to_string()],
         );
-        let logger = logger::Logger::new(false);
         let third_part_services = vec![];
 
-        let fact = Fact::new(&logger, &f, third_part_services);
+        let fact = Fact::new(&f, third_part_services);
 
         let mut facts: Vec<String> = vec![];
 
