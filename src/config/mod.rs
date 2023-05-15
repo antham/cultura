@@ -1,8 +1,12 @@
 use serde::{Deserialize, Serialize};
 use std::{
+    collections::HashSet,
+    error::Error,
     fmt::{self, Display},
     fs::{self, DirBuilder},
 };
+
+use crate::third_part;
 const DATABASE_NAME: &str = "cultura.db";
 
 #[derive(Serialize, Deserialize, Default, Clone)]
@@ -87,10 +91,24 @@ impl ConfigResolver {
         &self.config
     }
 
-    pub fn set_providers(&self, providers: Vec<String>) -> Result<(), std::io::Error> {
+    pub fn set_providers(&self, providers: Vec<String>) -> Result<(), Box<dyn Error>> {
+        if third_part::get_available_providers()
+            .values()
+            .filter(|x| providers.contains(&x.get_id()))
+            .count()
+            == 0
+        {
+            Err("Providers are invalid")?
+        }
+
         let mut c = self.config.clone();
         c.providers = Some(providers);
-        save_config(c, self)
+        save_config(c, self)?;
+        Ok(())
+    }
+
+    pub fn get_providers(&self) -> Option<Vec<String>> {
+        self.config.providers.clone()
     }
 
     pub fn get_database_path(&self) -> String {
@@ -128,15 +146,12 @@ impl ConfigResolver {
     pub fn is_log_enabled(&self) -> bool {
         self.enable_log
     }
-
-    pub fn get_providers(&self) -> Option<Vec<String>> {
-        self.config.providers.clone()
-    }
 }
 
-fn save_config(config: Config, config_resolver: &ConfigResolver) -> Result<(), std::io::Error> {
+fn save_config(config: Config, config_resolver: &ConfigResolver) -> Result<(), Box<dyn Error>> {
     let toml = toml::to_string(&config).unwrap();
-    fs::write(config_resolver.resolve_relative_path("config.toml"), toml)
+    fs::write(config_resolver.resolve_relative_path("config.toml"), toml)?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -203,5 +218,22 @@ mod tests {
                 Err(e) => panic!("{}", e),
             }
         }
+    }
+
+    #[test]
+    fn test_accessors_providers() {
+        let c = ConfigResolver::new(false).unwrap();
+        match c.set_providers(vec!["whatever".to_string()]) {
+            Err(e) => assert_eq!(e.to_string(), "Providers are invalid"),
+            Ok(_) => panic!("must return an error"),
+        };
+
+        match c.set_providers(vec!["til".to_string()]) {
+            Err(_) => panic!("must return no error"),
+            Ok(_) => (),
+        };
+
+        assert_eq!(c.get_providers().unwrap().len(), 1);
+        assert_eq!(c.get_providers().unwrap().get(0).unwrap(), "til");
     }
 }
