@@ -1,7 +1,7 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, error::Error};
 
 pub trait Crawler {
-    fn get_facts(&self) -> Result<Vec<String>, String>;
+    fn get_facts(&self) -> Result<Vec<String>, Box<dyn Error>>;
     fn get_id(&self) -> String;
 }
 
