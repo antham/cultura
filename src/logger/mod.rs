@@ -1,4 +1,4 @@
-use log::{error, info};
+use log::error;
 
 pub struct Logger {
     is_enabled: bool,
