@@ -215,7 +215,8 @@ mod tests {
             Ok(_) => (),
         };
 
-        assert_eq!(c.get_providers().unwrap().len(), 1);
-        assert_eq!(c.get_providers().unwrap().get(0).unwrap(), "til");
+        let c2 = ConfigResolver::new(false).unwrap();
+        assert_eq!(c2.get_providers().unwrap().len(), 1);
+        assert_eq!(c2.get_providers().unwrap().get(0).unwrap(), "til");
     }
 }
