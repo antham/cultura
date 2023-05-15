@@ -36,7 +36,7 @@ impl<'a> Daemon<'a> {
             .start()?;
 
         loop {
-            self.fact.update();
+            self.fact.update()?;
             thread::sleep(Duration::from_secs(
                 60 * self.config_resolver.get_scheduler_interval_as_minutes(),
             ));
