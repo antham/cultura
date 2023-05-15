@@ -110,8 +110,8 @@ fn main() {
         },
         Command::DaemonRoot(daemon) => match daemon {
             Daemon::Start {} => {
-                match daemon::Daemon::new(&config_resolver, &logger, &fact_service) {
-                    Ok(d) => d.start(),
+                match daemon::Daemon::new(&config_resolver, &fact_service).map(|d| d.start()) {
+                    Ok(_) => (),
                     Err(e) => logger.error(format!("cannot start daemon: {}", e)),
                 }
             }
