@@ -1,71 +1,77 @@
+use std::error::Error;
+
 use colored::Colorize;
 use regex::Regex;
 
-use crate::{db, logger::Logger, third_part::Crawler};
+use crate::{db, third_part::Crawler};
 
 pub struct Fact<'a> {
-    logger: &'a Logger,
     fact: &'a db::Fact,
     third_part_services: Vec<Box<dyn Crawler>>,
 }
 
 impl<'a> Fact<'a> {
-    pub fn new(
-        logger: &'a Logger,
-        fact: &'a db::Fact,
-        third_part_services: Vec<Box<dyn Crawler>>,
-    ) -> Self {
+    pub fn new(fact: &'a db::Fact, third_part_services: Vec<Box<dyn Crawler>>) -> Self {
         Fact {
-            logger,
             fact,
             third_part_services,
         }
     }
 
-    pub fn print_random(&self) {
-        match self.generate_random() {
-            Ok(Some(f)) => self.output(f),
-            Ok(None) => self.logger.info("No result to resut"),
-            Err(e) => self.logger.error(&e),
-        }
-    }
-
-    pub fn update(&self) {
-        self.third_part_services.iter().for_each(|service| -> () {
-            match service.get_facts() {
-                Ok(v) => {
-                    let parens = Regex::new("\\(.+\\)").unwrap();
-                    let multi_space = Regex::new(r"\s+").unwrap();
-
-                    self.fact
-                        .create(
-                            service.get_id(),
-                            v.iter()
-                                .map(|s| parens.replace_all(s.as_str(), "").to_string())
-                                .map(|s| multi_space.replace_all(s.as_str(), " ").to_string())
-                                .collect::<Vec<String>>(),
-                        )
-                        .iter()
-                        .for_each(|val| match val {
-                            Ok(_) => (),
-                            Err(e) => self.logger.error(e.to_string()),
-                        });
-                    ()
-                }
-                Err(e) => self.logger.error(e.to_string()),
-            }
+    pub fn print_random(&self) -> Result<(), Box<dyn Error>> {
+        self.generate_random()?.map(|fact| {
+            self.output(fact);
         });
+        Ok(())
     }
 
-    fn generate_random(&self) -> Result<Option<String>, String> {
-        match self.fact.get_random_fact() {
-            Ok(Some((id, data))) => match self.fact.mark_as_read(id) {
-                Ok(_) => Ok(Some(data)),
-                Err(e) => Err(e.to_string()),
-            },
-            Ok(None) => Ok(None),
-            Err(e) => Err(e.to_string()),
-        }
+    pub fn update(&self) -> Result<(), Box<dyn Error>> {
+        let r: Result<(), Box<dyn Error>> = Ok(());
+
+        self.third_part_services
+            .iter()
+            .map(|service: &Box<dyn Crawler>| -> Result<(), Box<dyn Error>> {
+                let parens = Regex::new("\\(.+\\)").unwrap();
+                let multi_space = Regex::new(r"\s+").unwrap();
+                let facts = service
+                    .get_facts()?
+                    .iter()
+                    .map(|s| parens.replace_all(s, "").to_string())
+                    .map(|s| multi_space.replace_all(s.as_str(), " ").to_string())
+                    .collect::<Vec<String>>();
+
+                let r: Result<(), Box<dyn Error>> = Ok(());
+
+                self.fact
+                    .create(service.get_id(), facts)
+                    .iter()
+                    .fold(r, |acc, item| match item {
+                        Ok(_) => acc,
+                        Err(e) => match acc {
+                            Ok(_) => Err(e.to_string().into()),
+                            Err(e_acc) => Err(format!("{}, {}", e_acc, e).into()),
+                        },
+                    })
+            })
+            .fold(r, |acc, item| match item {
+                Ok(_) => acc,
+                Err(e) => match acc {
+                    Ok(_) => Err(e.to_string().into()),
+                    Err(e_acc) => Err(format!("{}, {}", e_acc, e).into()),
+                },
+            })
+    }
+
+    fn generate_random(&self) -> Result<Option<String>, Box<dyn Error>> {
+        let data = self.fact.get_random_fact()?;
+
+        Ok(match data {
+            Some((id, fact)) => {
+                self.fact.mark_as_read(id)?;
+                Some(fact)
+            }
+            None => None,
+        })
     }
 
     fn output(&self, fact: String) {

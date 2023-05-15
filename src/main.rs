@@ -100,13 +100,14 @@ fn main() {
         exit(0);
     }
     let fact_repository = fact_repository_result.unwrap();
-    let fact_service = fact::Fact::new(&logger, &fact_repository, third_part_services);
+    let fact_service = fact::Fact::new(&fact_repository, third_part_services);
 
     match a.command {
         Command::FactRoot(provider) => match provider {
-            Fact::GenerateRandom {} => {
-                fact_service.print_random();
-            }
+            Fact::GenerateRandom {} => match fact_service.print_random() {
+                Ok(_) => (),
+                Err(e) => logger.error(format!("an error occurred when printing fact: {}", e)),
+            },
         },
         Command::DaemonRoot(daemon) => match daemon {
             Daemon::Start {} => {
