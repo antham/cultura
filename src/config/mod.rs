@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::HashSet,
     error::Error,
     fmt::{self, Display},
     fs::{self, DirBuilder},
@@ -35,7 +34,7 @@ pub struct ConfigResolver {
 }
 
 impl ConfigResolver {
-    pub fn new(enable_debug: bool) -> Result<ConfigResolver, String> {
+    pub fn new(enable_debug: bool) -> Result<ConfigResolver, Box<dyn Error>> {
         match home::home_dir() {
             Some(path) => {
                 let mut c = ConfigResolver {
@@ -45,37 +44,20 @@ impl ConfigResolver {
                 };
                 let config_file_path = c.resolve_relative_path("config.toml");
 
-                match DirBuilder::new()
+                DirBuilder::new()
                     .recursive(true)
-                    .create(c.get_root_config_path())
-                {
-                    Ok(_) => (),
-                    Err(e) => return Err(format!("cannot create config folder : {}", e)),
-                }
+                    .create(c.get_root_config_path())?;
 
                 if std::path::Path::new(&config_file_path).exists() {
-                    match fs::read_to_string(c.resolve_relative_path("config.toml")) {
-                        Ok(s) => match toml::from_str(s.as_str()) {
-                            Ok(config) => c.config = config,
-                            Err(e) => return Err(format!("cannot unserialize config file: {}", e)),
-                        },
-                        Err(e) => {
-                            return Err(format!(
-                                "an error occurred when reading config file: {}",
-                                e
-                            ))
-                        }
-                    };
+                    let s = fs::read_to_string(c.resolve_relative_path("config.toml"))?;
+                    c.config = toml::from_str(s.as_str())?;
                 } else {
                     let config = Config::default();
-                    match save_config(config, &c) {
-                        Err(e) => return Err(format!("cannot create config file: {}", e)),
-                        _ => (),
-                    };
+                    save_config(config, &c)?
                 }
                 Ok(c)
             }
-            None => Err("user home path cannot be found".to_string()),
+            None => Err("user home path cannot be found".to_string())?,
         }
     }
 
