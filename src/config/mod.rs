@@ -41,6 +41,14 @@ impl ConfigResolver {
                 };
                 let config_file_path = c.resolve_relative_path("config.toml");
 
+                match DirBuilder::new()
+                    .recursive(true)
+                    .create(c.get_root_config_path())
+                {
+                    Ok(_) => (),
+                    Err(e) => return Err(format!("cannot create config folder : {}", e)),
+                }
+
                 if std::path::Path::new(&config_file_path).exists() {
                     match fs::read_to_string(c.resolve_relative_path("config.toml")) {
                         Ok(s) => match toml::from_str(s.as_str()) {
@@ -61,14 +69,7 @@ impl ConfigResolver {
                         _ => (),
                     };
                 }
-
-                match DirBuilder::new()
-                    .recursive(true)
-                    .create(c.get_root_config_path())
-                {
-                    Ok(_) => Ok(c),
-                    Err(e) => Err(format!("cannot create config folder : {}", e)),
-                }
+                Ok(c)
             }
             None => Err("user home path cannot be found".to_string()),
         }
