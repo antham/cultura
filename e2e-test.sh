@@ -4,7 +4,7 @@
 
 echo "Start the daemon"
 
-cargo run daemon start
+cargo run -- -e true daemon start
 
 cultura_process_count=$(pgrep -c -f cultura)
 
@@ -33,7 +33,11 @@ stat ~/.config/cultura/cultura.db
 echo "Check the config file exists"
 stat ~/.config/cultura/config.toml
 
-sleep 30
+echo "Dump logs"
+cat ~/.config/cultura/stdout.log
+cat ~/.config/cultura/stderr.log
+
+sleep 10
 
 echo "Check if the generation command works"
 cargo run fact generate-random >generate-random.out
