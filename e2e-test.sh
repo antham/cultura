@@ -29,4 +29,4 @@ fi
 sleep 10
 
 echo "Check if the generation command works"
-cargo run fact generate-random | grep -E "Do you know that|Today I learned"
+cargo run fact generate-random | grep -E "Did you know that|Today I learned"
