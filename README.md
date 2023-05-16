@@ -29,3 +29,5 @@ At the top of your `.zshrc` file add:
 ```
 eval "$(cultura init zsh)"
 ```
+
+:information_source: If you have some slowdown issue with p10k, ensure that you moved the init command before the init of the p10k instant prompt
