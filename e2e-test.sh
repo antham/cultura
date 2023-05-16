@@ -29,4 +29,6 @@ fi
 sleep 10
 
 echo "Check if the generation command works"
-cargo run fact generate-random | grep -E "Did you know that|Today I learned"
+cargo run fact generate-random >generate-random.out
+cat generate-random.out
+grep -E "Did you know that|Today I learned" generate-random.out
