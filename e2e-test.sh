@@ -26,6 +26,13 @@ else
     exit 1
 fi
 
+echo "Check the config folder exists"
+stat ~/.config/cultura/
+echo "Check the database exists"
+stat ~/.config/cultura/cultura.db
+echo "Check the config file exists"
+stat ~/.config/cultura/config.toml
+
 sleep 30
 
 echo "Check if the generation command works"
