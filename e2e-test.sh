@@ -26,7 +26,7 @@ else
     exit 1
 fi
 
-sleep 10
+sleep 30
 
 echo "Check if the generation command works"
 cargo run fact generate-random >generate-random.out
