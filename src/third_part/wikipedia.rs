@@ -31,7 +31,7 @@ impl Crawler for Wikipedia {
                     .fold(String::new(), |acc: String, e: &str| acc.to_owned() + e)
             })
             .filter(|e| e.starts_with("..."))
-            .map(|e| e.replace("...", "Do you know"))
+            .map(|e| e.replace("...", "Did you know"))
             .collect::<Vec<String>>())
     }
 
