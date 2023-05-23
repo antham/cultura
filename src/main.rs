@@ -129,10 +129,12 @@ fn main() {
             Config::Dump {} => {
                 println!("{}", config_resolver.get_config())
             }
-            Config::SetProviders { providers } => {
-                config_resolver.set_providers(providers).unwrap();
-                println!("Option defined");
-            }
+            Config::SetProviders { providers } => match config_resolver.set_providers(providers) {
+                Ok(_) => {
+                    println!("option defined");
+                }
+                Err(e) => logger.error(format!("cannot set the option: {}", e)),
+            },
         },
     }
 }
