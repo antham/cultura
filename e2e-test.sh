@@ -2,12 +2,6 @@
 
 # Run e2e tests on cultura
 
-echo "Clear the config folder"
-
-rm -rf ~/.config/cultura
-
-echo
-
 echo "Start the daemon"
 
 cargo run -- -e true daemon start

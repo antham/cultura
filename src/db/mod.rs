@@ -28,7 +28,7 @@ impl Fact {
             .into_iter()
             .map(|f| -> Result<(), Box<dyn Error>> {
                 match self.connection.execute(
-                    "INSERT INTO facts VALUES (?1, ?2, ?3, ?4, ?5);",
+                    "INSERT INTO facts VALUES (?1, ?2, ?3, ?4, ?5) ON CONFLICT(fact) DO NOTHING ;",
                     [
                         (uuid::Uuid::new_v4().to_string()),
                         (f),
