@@ -29,7 +29,7 @@ struct Cultura {
 enum Command {
     #[structopt(name = "fact", about = "Manage fact")]
     FactRoot(Fact),
-    #[structopt(name = "daemon", about = "Run the daemon harvesting facts")]
+    #[structopt(name = "daemon", about = "Manage the daemon harvesting facts")]
     DaemonRoot(Daemon),
     #[structopt(name = "init", about = "Generate the shell configuration")]
     InitRoot(Shell),
@@ -47,6 +47,8 @@ enum Fact {
 enum Daemon {
     #[structopt(about = "Start the daemon")]
     Start {},
+    #[structopt(about = "Stop the daemon")]
+    Stop {},
 }
 
 #[derive(StructOpt, Debug)]
@@ -116,6 +118,12 @@ fn main() {
                     Err(e) => logger.error(format!("cannot start daemon: {}", e)),
                 }
             }
+            Daemon::Stop {} => {
+                match daemon::Daemon::new(&config_resolver, &fact_service).map(|d| d.stop()) {
+                    Ok(_) => (),
+                    Err(e) => logger.error(format!("cannot stop daemon: {}", e)),
+                }
+            }
         },
         Command::InitRoot(shell) => {
             let s = shell::Shell::new(&config_resolver);
@@ -131,7 +139,8 @@ fn main() {
             }
             Config::SetProviders { providers } => match config_resolver.set_providers(providers) {
                 Ok(_) => {
-                    println!("option defined");
+                    println!("option defined, restarting the daemon");
+                    Command::DaemonRoot(Daemon::Stop {});
                 }
                 Err(e) => logger.error(format!("cannot set the option: {}", e)),
             },

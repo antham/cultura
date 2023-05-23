@@ -1,6 +1,7 @@
 use std::{error::Error, fs::File, thread, time::Duration};
 
 use daemonize::Daemonize;
+use sysinfo::{Pid, ProcessExt, Signal, System, SystemExt};
 
 use crate::{config::ConfigResolver, fact::Fact};
 
@@ -40,6 +41,20 @@ impl<'a> Daemon<'a> {
             thread::sleep(Duration::from_secs(
                 60 * self.config_resolver.get_scheduler_interval_as_minutes(),
             ));
+        }
+    }
+
+    pub fn stop(&self) -> Result<(), Box<dyn Error>> {
+        let pid = Pid::from(self.config_resolver.get_daemon_pid()?);
+        match System::new().process(pid) {
+            Some(process) => {
+                if process.kill_with(Signal::Kill).is_none() {
+                    Err("cannot kill daemon on this platform".into())
+                } else {
+                    Ok(())
+                }
+            }
+            None => Err("cannot stop daemon".into()),
         }
     }
 }

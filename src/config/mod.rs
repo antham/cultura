@@ -101,6 +101,12 @@ impl ConfigResolver {
         self.resolve_relative_path("cultura.pid")
     }
 
+    pub fn get_daemon_pid(&self) -> Result<usize, Box<dyn Error>> {
+        let pid_str = fs::read_to_string(self.get_pid_file())?;
+        let pid = pid_str.trim().parse::<usize>()?;
+        Ok(pid)
+    }
+
     pub fn get_working_dir(&self) -> &str {
         "/tmp"
     }
