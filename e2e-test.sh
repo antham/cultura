@@ -2,6 +2,12 @@
 
 # Run e2e tests on cultura
 
+echo "Clear the config folder"
+
+rm -rf ~/.config/cultura
+
+echo
+
 echo "Start the daemon"
 
 cargo run -- -e true daemon start
@@ -28,8 +34,14 @@ fi
 
 echo "Check the config folder exists"
 stat ~/.config/cultura/
+
+echo
+
 echo "Check the database exists"
 stat ~/.config/cultura/cultura.db
+
+echo
+
 echo "Check the config file exists"
 stat ~/.config/cultura/config.toml
 
@@ -37,9 +49,22 @@ echo "Dump logs"
 cat ~/.config/cultura/stdout.log
 cat ~/.config/cultura/stderr.log
 
+echo
+
+echo "Dump config"
+cat ~/.config/cultura/config.toml
+
 sleep 10
 
-echo "Check if the generation command works"
+echo "Check the database size"
+stat ~/.config/cultura/cultura.db
+
+echo
+
 cargo run fact generate-random >generate-random.out
+
+echo "Dump the content of the generation command"
 cat generate-random.out
+
+echo "Check if the generation command works"
 grep -E "Did you know that|Today I learned" generate-random.out
