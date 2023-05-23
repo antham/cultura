@@ -21,7 +21,7 @@ mod third_part;
 struct Cultura {
     #[structopt(subcommand)]
     command: Command,
-    #[structopt(short, long, env = "ENABLE_LOG")]
+    #[structopt(global = true, short, long, env = "ENABLE_LOG")]
     enable_log: bool,
 }
 
