@@ -59,6 +59,15 @@ cargo run fact generate-random >generate-random.out
 
 echo "Dump the content of the generation command"
 cat generate-random.out
+echo
 
 echo "Check if the generation command works"
 grep -E "Did you know that|Today I learned" generate-random.out
+echo
+
+echo "Kill the daemon"
+cargo run daemon stop
+if [[ $(pgrep -c -f cultura || true) -ne 0 ]]; then
+    echo "The daemon stop command failed"
+    exit 1
+fi
