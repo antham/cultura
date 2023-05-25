@@ -139,8 +139,7 @@ fn main() {
             }
             Config::SetProviders { providers } => match config_resolver.set_providers(providers) {
                 Ok(_) => {
-                    println!("option defined, restarting the daemon");
-                    Command::DaemonRoot(Daemon::Stop {});
+                    println!("option defined");
                 }
                 Err(e) => logger.error(format!("cannot set the option: {}", e)),
             },
