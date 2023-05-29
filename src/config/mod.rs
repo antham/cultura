@@ -5,7 +5,7 @@ use std::{
     fs::{self, DirBuilder},
 };
 
-use crate::third_part;
+use crate::third_part::{self, Crawler};
 const DATABASE_NAME: &str = "cultura.db";
 
 #[derive(Serialize, Deserialize, Default, Clone)]
@@ -89,8 +89,15 @@ impl ConfigResolver {
         Ok(())
     }
 
-    pub fn get_providers(&self) -> Option<Vec<String>> {
-        self.config.providers.clone()
+    pub fn get_providers(&self) -> Vec<Box<dyn Crawler>> {
+        third_part::get_available_providers()
+            .into_iter()
+            .filter(|(k, _)| match &self.config.providers {
+                None => true,
+                Some(providers) => providers.contains(k),
+            })
+            .map(|(_, v)| v)
+            .collect::<Vec<Box<dyn Crawler>>>()
     }
 
     pub fn get_database_path(&self) -> String {
@@ -222,7 +229,7 @@ mod tests {
         };
 
         let c2 = ConfigResolver::new(false).unwrap();
-        assert_eq!(c2.get_providers().unwrap().len(), 1);
-        assert_eq!(c2.get_providers().unwrap().get(0).unwrap(), "til");
+        assert_eq!(c2.get_providers().len(), 1);
+        assert_eq!(c2.get_providers().first().unwrap().get_id(), "til");
     }
 }

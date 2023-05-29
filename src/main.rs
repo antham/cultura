@@ -84,14 +84,7 @@ fn main() {
     }
     let config_resolver = config_resolver_result.unwrap();
 
-    let third_part_services: Vec<Box<dyn Crawler>> = third_part::get_available_providers()
-        .into_iter()
-        .filter(|(k, _)| match config_resolver.get_providers() {
-            None => true,
-            Some(providers) => providers.contains(k),
-        })
-        .map(|(_, v)| v)
-        .collect::<Vec<Box<dyn Crawler>>>();
+    let third_part_services: Vec<Box<dyn Crawler>> = config_resolver.get_providers();
 
     let fact_repository_result = crate::db::Fact::new(&config_resolver.get_database_path());
     if fact_repository_result.is_err() {
