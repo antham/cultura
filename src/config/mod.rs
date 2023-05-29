@@ -51,12 +51,14 @@ impl ConfigResolver {
                 if std::path::Path::new(&config_file_path).exists() {
                     let s = fs::read_to_string(c.resolve_relative_path("config.toml"))?;
                     c.config = toml::from_str(s.as_str())?;
+                    if c.config.providers.is_empty() {
+                        c.config.providers = third_part::get_available_providers()
+                            .values()
+                            .cloned()
+                            .collect();
+                    }
                 } else {
-                    let mut config = Config::default();
-                    config.providers = third_part::get_available_providers()
-                        .values()
-                        .cloned()
-                        .collect();
+                    let config = Config::default();
                     save_config(config, &c)?
                 }
                 Ok(c)
