@@ -3,16 +3,22 @@ use std::error::Error;
 use colored::Colorize;
 use regex::Regex;
 
-use crate::{db, third_part::Crawler};
+use crate::{config::ConfigResolver, db, third_part::Crawler};
 
 pub struct Fact<'a> {
+    config_resolver: &'a ConfigResolver,
     fact: &'a db::Fact,
     third_part_services: Vec<Box<dyn Crawler>>,
 }
 
 impl<'a> Fact<'a> {
-    pub fn new(fact: &'a db::Fact, third_part_services: Vec<Box<dyn Crawler>>) -> Self {
+    pub fn new(
+        config_resolver: &'a ConfigResolver,
+        fact: &'a db::Fact,
+        third_part_services: Vec<Box<dyn Crawler>>,
+    ) -> Self {
         Fact {
+            config_resolver,
             fact,
             third_part_services,
         }
@@ -20,7 +26,7 @@ impl<'a> Fact<'a> {
 
     pub fn print_random(&self) -> Result<(), Box<dyn Error>> {
         self.generate_random()?.map(|fact| {
-            self.output(fact);
+            println!("{}", self.generate_output(fact));
         });
         Ok(())
     }
@@ -74,16 +80,57 @@ impl<'a> Fact<'a> {
         })
     }
 
-    fn output(&self, fact: String) {
-        println!(
-            r"{}
+    fn generate_output(&self, fact: String) -> String {
+        let mut template = self.config_resolver.get_template().clone();
+        let mut acc = String::new();
+        let mut data: Vec<String> = vec![];
+        let mut start_acc = false;
+        for (i, c) in template.to_string().chars().enumerate() {
+            if c == '_' || c == '$' {
+                start_acc = true;
+            }
+            if Regex::new(r"\s").unwrap().is_match(&c.to_string()) {
+                start_acc = false;
+            }
+            if start_acc {
+                acc.push(c);
+            }
+            if !start_acc && (acc.len() > 0 || i == template.len()) {
+                data.push(acc.to_owned());
+                acc.clear();
+            }
+        }
 
-{} {}
-",
-            "Cultura".magenta().bold(),
-            "|>".cyan(),
-            fact.yellow(),
-        )
+        for d in data {
+            let items = d.split(":").collect::<Vec<&str>>();
+            let mut text_formatted = items
+                .get(0)
+                .unwrap()
+                .replace("__", "")
+                .replace("$fact", fact.as_str())
+                .to_string()
+                .normal();
+            for text_format in items.into_iter().skip(1) {
+                text_formatted = match text_format {
+                    "blue" => text_formatted.blue(),
+                    "red" => text_formatted.red(),
+                    "green" => text_formatted.green(),
+                    "black" => text_formatted.black(),
+                    "yellow" => text_formatted.yellow(),
+                    "white" => text_formatted.white(),
+                    "purple" => text_formatted.purple(),
+                    "cyan" => text_formatted.cyan(),
+                    "magenta" => text_formatted.magenta(),
+                    "bold" => text_formatted.bold(),
+                    "dimmed" => text_formatted.dimmed(),
+                    "italic" => text_formatted.italic(),
+                    "underline" => text_formatted.underline(),
+                    _ => text_formatted.normal(),
+                };
+            }
+            template = template.replace(d.as_str(), format!("{}", text_formatted).as_str());
+        }
+        template
     }
 }
 
@@ -123,7 +170,8 @@ mod tests {
             "whatever 2".to_string(),
         ];
         let third_part_services: Vec<Box<dyn Crawler>> = vec![Box::new(CrawlerMock { facts })];
-        let fact = Fact::new(&f, third_part_services);
+        let config_resolver = ConfigResolver::new(false).unwrap();
+        let fact = Fact::new(&config_resolver, &f, third_part_services);
         fact.update().unwrap();
 
         let conn = Connection::open(database_name).unwrap();
@@ -149,8 +197,9 @@ mod tests {
             vec!["fact1".to_string(), "fact2".to_string()],
         );
         let third_part_services = vec![];
+        let config_resolver = ConfigResolver::new(false).unwrap();
 
-        let fact = Fact::new(&f, third_part_services);
+        let fact = Fact::new(&config_resolver, &f, third_part_services);
 
         let mut facts: Vec<String> = vec![];
 
@@ -165,5 +214,24 @@ mod tests {
         let f3 = fact.generate_random();
         assert!(f3.is_ok());
         assert!(f3.ok().unwrap() == None);
+    }
+
+    #[test]
+    fn test_generate_output() {
+        let database_name = "generate-random-fact";
+
+        let _ = fs::remove_file(database_name);
+        let f = crate::db::Fact::new(database_name).unwrap();
+        let third_part_services = vec![];
+        let config_resolver = ConfigResolver::new(false).unwrap();
+
+        let fact = Fact::new(&config_resolver, &f, third_part_services);
+        let data = fact.generate_output("fact1".to_string());
+
+        assert_eq!(
+            data,
+            "\u{1b}[1;35mCultura\u{1b}[0m\n\n".to_owned()
+                + "\u{1b}[36m|>\u{1b}[0m \u{1b}[33mfact1\u{1b}[0m\n"
+        );
     }
 }

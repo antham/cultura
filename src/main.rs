@@ -65,6 +65,8 @@ enum Shell {
 enum Config {
     #[structopt(about = "Define the providers to enable")]
     SetProviders { providers: Vec<String> },
+    #[structopt(about = "Define the template to use to display a fact")]
+    SetTemplate { template: String },
     #[structopt(about = "Dump the current config")]
     Dump {},
 }
@@ -95,7 +97,7 @@ fn main() {
         exit(0);
     }
     let fact_repository = fact_repository_result.unwrap();
-    let fact_service = fact::Fact::new(&fact_repository, third_part_services);
+    let fact_service = fact::Fact::new(&config_resolver, &fact_repository, third_part_services);
 
     match a.command {
         Command::FactRoot(provider) => match provider {
@@ -132,9 +134,15 @@ fn main() {
             }
             Config::SetProviders { providers } => match config_resolver.set_providers(providers) {
                 Ok(_) => {
-                    println!("option defined");
+                    println!("providers defined");
                 }
-                Err(e) => logger.error(format!("cannot set the option: {}", e)),
+                Err(e) => logger.error(format!("cannot set the providers: {}", e)),
+            },
+            Config::SetTemplate { template } => match config_resolver.set_template(template) {
+                Ok(_) => {
+                    println!("template defined");
+                }
+                Err(e) => logger.error(format!("cannot set the template: {}", e)),
             },
         },
     }

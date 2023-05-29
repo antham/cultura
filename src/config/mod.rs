@@ -7,10 +7,15 @@ use std::{
 
 use crate::third_part::{self, Crawler};
 const DATABASE_NAME: &str = "cultura.db";
+const DEFAULT_TEMPLATE: &str = r#"__Cultura__:magenta:bold
+
+__|>__:cyan $fact:yellow
+"#;
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct Config {
     providers: Vec<Box<dyn Crawler>>,
+    template: String,
 }
 
 impl Display for Config {
@@ -58,7 +63,8 @@ impl ConfigResolver {
                             .collect();
                     }
                 } else {
-                    let config = Config::default();
+                    let mut config = Config::default();
+                    config.template = String::from(DEFAULT_TEMPLATE);
                     save_config(config, &c)?
                 }
                 Ok(c)
@@ -79,6 +85,17 @@ impl ConfigResolver {
         &self.config
     }
 
+    pub fn set_template(&self, template: String) -> Result<(), Box<dyn Error>> {
+        let mut c = self.config.clone();
+        c.template = template;
+        save_config(c, self)?;
+        Ok(())
+    }
+
+    pub fn get_template(&self) -> String {
+        self.config.template.clone()
+    }
+
     pub fn set_providers(&self, providers: Vec<String>) -> Result<(), Box<dyn Error>> {
         let available_providers = third_part::get_available_providers();
         let ps = providers
@@ -89,7 +106,7 @@ impl ConfigResolver {
             .collect::<Vec<Box<dyn third_part::Crawler>>>();
 
         if ps.len() != providers.len() {
-            Err("Some providers are invalid")?
+            Err("some providers are invalid")?
         } else {
             let mut c = self.config.clone();
             c.providers = ps;
@@ -221,7 +238,7 @@ mod tests {
     fn test_accessors_providers() {
         let c = ConfigResolver::new(false).unwrap();
         match c.set_providers(vec!["whatever".to_string()]) {
-            Err(e) => assert_eq!(e.to_string(), "Some providers are invalid"),
+            Err(e) => assert_eq!(e.to_string(), "some providers are invalid"),
             Ok(_) => panic!("must return an error"),
         };
 
