@@ -223,13 +223,13 @@ mod tests {
             Ok(_) => panic!("must return an error"),
         };
 
-        match c.set_providers(vec!["til".to_string()]) {
+        match c.set_providers(vec!["TIL".to_string()]) {
             Err(e) => panic!("must return no error: {}", e),
             Ok(_) => (),
         };
 
         let c2 = ConfigResolver::new(false).unwrap();
         assert_eq!(c2.get_providers().len(), 1);
-        assert_eq!(c2.get_providers().first().unwrap().get_id(), "til");
+        assert_eq!(c2.get_providers().first().unwrap().get_id(), "TIL");
     }
 }

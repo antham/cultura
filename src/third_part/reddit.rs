@@ -8,20 +8,21 @@ use serde::Serialize;
 use super::Crawler;
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct Reddit {
+pub struct TIL {
+    #[serde(skip)]
     url: String,
 }
 
-impl Reddit {
-    pub fn new() -> Reddit {
-        Reddit {
+impl TIL {
+    pub fn new() -> TIL {
+        TIL {
             url: "https://www.reddit.com/r/todayilearned/new".to_string(),
         }
     }
 }
 
 #[typetag::serde]
-impl Crawler for Reddit {
+impl Crawler for TIL {
     fn get_facts(&self) -> Result<Vec<String>, Box<dyn Error>> {
         let body = reqwest::blocking::get(&self.url)?;
         let fragment = Html::parse_document(body.text()?.as_str());
@@ -39,6 +40,6 @@ impl Crawler for Reddit {
     }
 
     fn get_id(&self) -> String {
-        "til".to_string()
+        "TIL".to_string()
     }
 }

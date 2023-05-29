@@ -8,20 +8,21 @@ use serde::Serialize;
 use super::Crawler;
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct Wikipedia {
+pub struct DYK {
+    #[serde(skip)]
     url: String,
 }
 
-impl Wikipedia {
-    pub fn new() -> Wikipedia {
-        Wikipedia {
+impl DYK {
+    pub fn new() -> DYK {
+        DYK {
             url: "https://en.wikipedia.org/wiki/Wikipedia:Recent_additions".to_string(),
         }
     }
 }
 
 #[typetag::serde]
-impl Crawler for Wikipedia {
+impl Crawler for DYK {
     fn get_facts(&self) -> Result<Vec<String>, Box<dyn Error>> {
         let body = reqwest::blocking::get(&self.url)?;
 
@@ -40,6 +41,6 @@ impl Crawler for Wikipedia {
     }
 
     fn get_id(&self) -> String {
-        "dyk".to_string()
+        "DYK".to_string()
     }
 }
