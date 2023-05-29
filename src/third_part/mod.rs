@@ -1,9 +1,14 @@
 use std::{collections::HashMap, error::Error};
 
-pub trait Crawler {
+use dyn_clone::DynClone;
+
+#[typetag::serde(tag = "provider")]
+pub trait Crawler: DynClone {
     fn get_facts(&self) -> Result<Vec<String>, Box<dyn Error>>;
     fn get_id(&self) -> String;
 }
+
+dyn_clone::clone_trait_object!(Crawler);
 
 pub mod reddit;
 pub mod wikipedia;

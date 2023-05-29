@@ -2,9 +2,12 @@ use std::error::Error;
 
 use scraper::Html;
 use scraper::Selector;
+use serde::Deserialize;
+use serde::Serialize;
 
 use super::Crawler;
 
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Wikipedia {
     url: String,
 }
@@ -17,6 +20,7 @@ impl Wikipedia {
     }
 }
 
+#[typetag::serde]
 impl Crawler for Wikipedia {
     fn get_facts(&self) -> Result<Vec<String>, Box<dyn Error>> {
         let body = reqwest::blocking::get(&self.url)?;

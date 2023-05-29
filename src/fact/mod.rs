@@ -92,13 +92,16 @@ mod tests {
     use std::fs;
 
     use rusqlite::Connection;
+    use serde::{Deserialize, Serialize};
 
     use super::*;
 
+    #[derive(Serialize, Deserialize, Clone)]
     struct CrawlerMock {
         facts: Vec<String>,
     }
 
+    #[typetag::serde]
     impl Crawler for CrawlerMock {
         fn get_facts(&self) -> Result<Vec<String>, Box<dyn Error>> {
             Ok(self.facts.to_owned())

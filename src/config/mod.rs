@@ -10,18 +10,18 @@ const DATABASE_NAME: &str = "cultura.db";
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct Config {
-    providers: Option<Vec<String>>,
+    providers: Vec<Box<dyn Crawler>>,
 }
 
 impl Display for Config {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "providers => {}",
-            match self.providers.clone() {
-                None => "<default value>".to_string(),
-                Some(providers) => providers.join(","),
-            }
+            "providers => {:?}",
+            self.providers
+                .iter()
+                .map(|p| p.get_id())
+                .collect::<Vec<String>>(),
         )
     }
 }
@@ -52,7 +52,11 @@ impl ConfigResolver {
                     let s = fs::read_to_string(c.resolve_relative_path("config.toml"))?;
                     c.config = toml::from_str(s.as_str())?;
                 } else {
-                    let config = Config::default();
+                    let mut config = Config::default();
+                    config.providers = third_part::get_available_providers()
+                        .values()
+                        .cloned()
+                        .collect();
                     save_config(config, &c)?
                 }
                 Ok(c)
@@ -74,30 +78,26 @@ impl ConfigResolver {
     }
 
     pub fn set_providers(&self, providers: Vec<String>) -> Result<(), Box<dyn Error>> {
-        if third_part::get_available_providers()
-            .values()
-            .filter(|x| providers.contains(&x.get_id()))
-            .count()
-            == 0
-        {
-            Err("Providers are invalid")?
-        }
+        let available_providers = third_part::get_available_providers();
+        let ps = providers
+            .clone()
+            .into_iter()
+            .filter(|p| available_providers.contains_key(p.as_str()))
+            .map(|p| available_providers.get(p.as_str()).unwrap().clone())
+            .collect::<Vec<Box<dyn third_part::Crawler>>>();
 
-        let mut c = self.config.clone();
-        c.providers = Some(providers);
-        save_config(c, self)?;
-        Ok(())
+        if ps.len() != providers.len() {
+            Err("Some providers are invalid")?
+        } else {
+            let mut c = self.config.clone();
+            c.providers = ps;
+            save_config(c, self)?;
+            Ok(())
+        }
     }
 
     pub fn get_providers(&self) -> Vec<Box<dyn Crawler>> {
-        third_part::get_available_providers()
-            .into_iter()
-            .filter(|(k, _)| match &self.config.providers {
-                None => true,
-                Some(providers) => providers.contains(k),
-            })
-            .map(|(_, v)| v)
-            .collect::<Vec<Box<dyn Crawler>>>()
+        self.config.providers.clone()
     }
 
     pub fn get_database_path(&self) -> String {
@@ -219,12 +219,12 @@ mod tests {
     fn test_accessors_providers() {
         let c = ConfigResolver::new(false).unwrap();
         match c.set_providers(vec!["whatever".to_string()]) {
-            Err(e) => assert_eq!(e.to_string(), "Providers are invalid"),
+            Err(e) => assert_eq!(e.to_string(), "Some providers are invalid"),
             Ok(_) => panic!("must return an error"),
         };
 
         match c.set_providers(vec!["til".to_string()]) {
-            Err(_) => panic!("must return no error"),
+            Err(e) => panic!("must return no error: {}", e),
             Ok(_) => (),
         };
 
