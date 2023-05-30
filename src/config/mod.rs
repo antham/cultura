@@ -11,8 +11,7 @@ use crate::third_part::{self, Crawler};
 const DATABASE_NAME: &str = "cultura.db";
 const DEFAULT_TEMPLATE: &str = r#"__Cultura__:magenta:bold
 
-__|>__:cyan $fact:yellow
-"#;
+__|>__:cyan $fact:yellow"#;
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct Config {

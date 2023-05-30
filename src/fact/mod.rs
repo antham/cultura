@@ -81,7 +81,7 @@ impl<'a> Fact<'a> {
     }
 
     fn generate_output(&self, fact: String) -> String {
-        let mut template = self.config_resolver.get_template().clone();
+        let mut template = self.config_resolver.get_template();
         let mut acc = String::new();
         let mut data: Vec<String> = vec![];
         let mut start_acc = false;
@@ -95,7 +95,7 @@ impl<'a> Fact<'a> {
             if start_acc {
                 acc.push(c);
             }
-            if !start_acc && (acc.len() > 0 || i == template.len()) {
+            if (i + 1 == template.len() || !start_acc) && acc.len() > 0 {
                 data.push(acc.to_owned());
                 acc.clear();
             }
@@ -234,7 +234,7 @@ mod tests {
         assert_eq!(
             data,
             "\u{1b}[1;35mCultura\u{1b}[0m\n\n".to_owned()
-                + "\u{1b}[36m|>\u{1b}[0m \u{1b}[33mfact1\u{1b}[0m\n"
+                + "\u{1b}[36m|>\u{1b}[0m \u{1b}[33mfact1\u{1b}[0m"
         );
     }
 }
