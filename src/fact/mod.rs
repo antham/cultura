@@ -228,13 +228,23 @@ mod tests {
         let config_resolver =
             ConfigResolver::new(Some(tempdir().unwrap().into_path()), false).unwrap();
 
-        let fact = Fact::new(&config_resolver, &f, third_part_services);
-        let data = fact.generate_output("fact1".to_string());
+        {
+            let fact = Fact::new(&config_resolver, &f, third_part_services.clone());
+            let data = fact.generate_output("fact1".to_string());
 
-        assert_eq!(
-            data,
-            "\u{1b}[1;35mCultura\u{1b}[0m\n\n".to_owned()
-                + "\u{1b}[36m|>\u{1b}[0m \u{1b}[33mfact1\u{1b}[0m"
-        );
+            assert_eq!(
+                data,
+                "\u{1b}[1;35mCultura\u{1b}[0m\n\n".to_owned()
+                    + "\u{1b}[36m|>\u{1b}[0m \u{1b}[33mfact1\u{1b}[0m"
+            );
+        }
+        {
+            config_resolver
+                .set_template("$fact:red".to_string())
+                .unwrap();
+            let fact = Fact::new(&config_resolver, &f, third_part_services);
+            let data = fact.generate_output("fact1".to_string());
+            assert_eq!(data, "\u{1b}[31mfact1\u{1b}[0m");
+        }
     }
 }
