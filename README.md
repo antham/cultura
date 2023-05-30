@@ -1,8 +1,26 @@
 Cultura helps you to improve your culture day after day by showing little fact taken from reddit, wikipedia and so on.
 
-# Shell config
+# Install
 
-## Bash
+## How to install
+
+### From rust
+
+Run :
+
+```
+cargo install cultura
+```
+
+### From GitHub
+
+Download the binary from the release page => https://github.com/antham/cultura/releases/latest and install it in your binary path.
+
+## Shell config
+
+You must setup cultura in your shell, look at the following configuration corresponding to your shell.
+
+### Bash
 
 It could depend how bash is setup.
 
@@ -12,7 +30,7 @@ At the top of your `.bashrc` file add:
 eval "$(cultura init bash)"
 ```
 
-## Fish
+### Fish
 
 In your fish config file add:
 
@@ -20,7 +38,7 @@ In your fish config file add:
 cultura init fish | source
 ```
 
-## Zsh
+### Zsh
 
 It could depend how zsh is setup.
 
@@ -31,3 +49,48 @@ eval "$(cultura init zsh)"
 ```
 
 :information_source: If you have some slowdown issue with p10k, ensure that you moved the init command before the init of the p10k instant prompt
+
+# Configuration
+
+## The fact rendering
+
+You can customize the way a fact is rendered by using the command `cultura config set-template`.
+
+Let see an example :
+
+```
+__Cultura__:magenta:bold
+
+__|>__:cyan $fact:yellow
+```
+
+Your text must be enclosed between 2 underscores, you can provide a color and use styles like in the example.
+
+The `$fact` variable is a special one and will be interpolated with the fact.
+
+Available style and color :
+
+- blue
+- red
+- green
+- black
+- yellow
+- white
+- purple
+- cyan
+- magenta
+
+- bold
+- dimmed
+- italic
+- underline
+
+## The providers
+
+You can define which fact provider you want to use, default is to display all, if you want to customize which one to use do `cargo run config set-providers TIL,DYK`, it will use both `DYK` and `TIL` as fact provider.
+
+The available providers:
+| Provider | Site                                                     |
+|----------|----------------------------------------------------------|
+| DYK      | https://en.wikipedia.org/wiki/Wikipedia:Recent_additions |
+| TIL      | https://www.reddit.com/r/todayilearned/                  |
