@@ -1,8 +1,10 @@
 use serde::{Deserialize, Serialize};
 use std::{
+    cell::RefCell,
     error::Error,
     fmt::{self, Display},
     fs::{self, DirBuilder},
+    path::PathBuf,
 };
 
 use crate::third_part::{self, Crawler};
@@ -35,12 +37,15 @@ impl Display for Config {
 pub struct ConfigResolver {
     home_dir: String,
     enable_log: bool,
-    config: Config,
+    config: RefCell<Config>,
 }
 
 impl ConfigResolver {
-    pub fn new(enable_debug: bool) -> Result<ConfigResolver, Box<dyn Error>> {
-        match home::home_dir() {
+    pub fn new(
+        path: Option<PathBuf>,
+        enable_debug: bool,
+    ) -> Result<ConfigResolver, Box<dyn Error>> {
+        match path {
             Some(path) => {
                 let mut c = ConfigResolver {
                     home_dir: path.display().to_string(),
@@ -55,9 +60,9 @@ impl ConfigResolver {
 
                 if std::path::Path::new(&config_file_path).exists() {
                     let s = fs::read_to_string(c.resolve_relative_path("config.toml"))?;
-                    c.config = toml::from_str(s.as_str())?;
-                    if c.config.providers.is_empty() {
-                        c.config.providers = third_part::get_available_providers()
+                    c.config = RefCell::new(toml::from_str(s.as_str())?);
+                    if c.config.borrow().providers.is_empty() {
+                        c.config.borrow_mut().providers = third_part::get_available_providers()
                             .values()
                             .cloned()
                             .collect();
@@ -65,11 +70,12 @@ impl ConfigResolver {
                 } else {
                     let mut config = Config::default();
                     config.template = String::from(DEFAULT_TEMPLATE);
-                    save_config(config, &c)?
+                    save_config(config.clone(), &c)?;
+                    c.config = RefCell::new(config);
                 }
                 Ok(c)
             }
-            None => Err("user home path cannot be found".to_string())?,
+            None => Err("path cannot be found".to_string())?,
         }
     }
 
@@ -81,19 +87,18 @@ impl ConfigResolver {
         format!("{}/{}", self.get_root_config_path(), path)
     }
 
-    pub fn get_config(&self) -> &Config {
-        &self.config
+    pub fn get_config(&self) -> Config {
+        self.config.borrow().clone()
     }
 
     pub fn set_template(&self, template: String) -> Result<(), Box<dyn Error>> {
-        let mut c = self.config.clone();
-        c.template = template;
-        save_config(c, self)?;
+        self.config.borrow_mut().template = template;
+        save_config(self.config.borrow().clone(), self)?;
         Ok(())
     }
 
     pub fn get_template(&self) -> String {
-        self.config.template.clone()
+        self.config.borrow().template.clone()
     }
 
     pub fn set_providers(&self, providers: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -108,15 +113,14 @@ impl ConfigResolver {
         if ps.len() != providers.len() {
             Err("some providers are invalid")?
         } else {
-            let mut c = self.config.clone();
-            c.providers = ps;
-            save_config(c, self)?;
+            self.config.borrow_mut().providers = ps;
+            save_config(self.config.borrow().clone(), self)?;
             Ok(())
         }
     }
 
     pub fn get_providers(&self) -> Vec<Box<dyn Crawler>> {
-        self.config.providers.clone()
+        self.config.borrow().providers.clone()
     }
 
     pub fn get_database_path(&self) -> String {
@@ -171,32 +175,33 @@ fn save_config(config: Config, config_resolver: &ConfigResolver) -> Result<(), B
 #[cfg(test)]
 mod tests {
     use regex::Regex;
+    use tempfile::tempdir;
 
     use super::*;
 
     #[test]
     fn test_config_resolver() {
         {
-            let c = ConfigResolver::new(false);
+            let c = ConfigResolver::new(Some(tempdir().unwrap().into_path()), false);
             match c {
                 Ok(config) => {
                     assert!(config.enable_log == false);
                     assert!(
-                        Regex::new(r"^/home/.*?/.config/cultura$")
+                        Regex::new(r"^.*?/.config/cultura$")
                             .unwrap()
                             .is_match(&config.get_root_config_path()),
                         "root_config_path = {}",
                         &config.get_root_config_path(),
                     );
                     assert!(
-                        Regex::new(r"^/home/.*?/.config/cultura/cultura.db$")
+                        Regex::new(r"^.*?/.config/cultura/cultura.db$")
                             .unwrap()
                             .is_match(&config.get_database_path()),
                         "database_path = {}",
                         &config.get_database_path(),
                     );
                     assert!(
-                        Regex::new(r"^/home/.*?/.config/cultura/cultura.pid$")
+                        Regex::new(r"^.*?/.config/cultura/cultura.pid$")
                             .unwrap()
                             .is_match(&config.get_pid_file()),
                         "pid_file = {}",
@@ -210,19 +215,19 @@ mod tests {
         }
 
         {
-            let c = ConfigResolver::new(true);
+            let c = ConfigResolver::new(Some(tempdir().unwrap().into_path()), true);
             match c {
                 Ok(config) => {
                     assert!(config.enable_log == true);
                     assert!(
-                        Regex::new(r"^/home/.*?/.config/cultura/stdout.log$")
+                        Regex::new(r"^.*?/.config/cultura/stdout.log$")
                             .unwrap()
                             .is_match(&config.get_stdout_file()),
                         "stdout_file = {}",
                         &config.get_stdout_file(),
                     );
                     assert!(
-                        Regex::new(r"^/home/.*?/.config/cultura/stderr.log$")
+                        Regex::new(r"^.*?/.config/cultura/stderr.log$")
                             .unwrap()
                             .is_match(&config.get_stderr_file()),
                         "stderr_file = {}",
@@ -236,7 +241,7 @@ mod tests {
 
     #[test]
     fn test_accessors_providers() {
-        let c = ConfigResolver::new(false).unwrap();
+        let c = ConfigResolver::new(Some(tempdir().unwrap().into_path()), false).unwrap();
         match c.set_providers(vec!["whatever".to_string()]) {
             Err(e) => assert_eq!(e.to_string(), "some providers are invalid"),
             Ok(_) => panic!("must return an error"),
@@ -246,9 +251,11 @@ mod tests {
             Err(e) => panic!("must return no error: {}", e),
             Ok(_) => (),
         };
+        println!("{}", c.get_config());
+        assert_eq!(c.get_providers().len(), 1);
+        assert_eq!(c.get_providers().first().unwrap().get_id(), "TIL");
 
-        let c2 = ConfigResolver::new(false).unwrap();
-        assert_eq!(c2.get_providers().len(), 1);
-        assert_eq!(c2.get_providers().first().unwrap().get_id(), "TIL");
+        let c2 = ConfigResolver::new(Some(tempdir().unwrap().into_path()), false).unwrap();
+        assert_eq!(c2.get_providers().len(), 0);
     }
 }

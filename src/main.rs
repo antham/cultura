@@ -76,7 +76,7 @@ fn main() {
 
     let logger = logger::Logger::new(a.enable_log);
 
-    let config_resolver_result = config::ConfigResolver::new(a.enable_log);
+    let config_resolver_result = config::ConfigResolver::new(home::home_dir(), a.enable_log);
     if config_resolver_result.is_err() {
         logger.error(format!(
             "cannot bootstrap the config: {}",

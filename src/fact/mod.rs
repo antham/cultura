@@ -140,6 +140,7 @@ mod tests {
 
     use rusqlite::Connection;
     use serde::{Deserialize, Serialize};
+    use tempfile::tempdir;
 
     use super::*;
 
@@ -170,7 +171,8 @@ mod tests {
             "whatever 2".to_string(),
         ];
         let third_part_services: Vec<Box<dyn Crawler>> = vec![Box::new(CrawlerMock { facts })];
-        let config_resolver = ConfigResolver::new(false).unwrap();
+        let config_resolver =
+            ConfigResolver::new(Some(tempdir().unwrap().into_path()), false).unwrap();
         let fact = Fact::new(&config_resolver, &f, third_part_services);
         fact.update().unwrap();
 
@@ -197,7 +199,8 @@ mod tests {
             vec!["fact1".to_string(), "fact2".to_string()],
         );
         let third_part_services = vec![];
-        let config_resolver = ConfigResolver::new(false).unwrap();
+        let config_resolver =
+            ConfigResolver::new(Some(tempdir().unwrap().into_path()), false).unwrap();
 
         let fact = Fact::new(&config_resolver, &f, third_part_services);
 
@@ -219,11 +222,11 @@ mod tests {
     #[test]
     fn test_generate_output() {
         let database_name = "generate-random-fact";
-
         let _ = fs::remove_file(database_name);
         let f = crate::db::Fact::new(database_name).unwrap();
         let third_part_services = vec![];
-        let config_resolver = ConfigResolver::new(false).unwrap();
+        let config_resolver =
+            ConfigResolver::new(Some(tempdir().unwrap().into_path()), false).unwrap();
 
         let fact = Fact::new(&config_resolver, &f, third_part_services);
         let data = fact.generate_output("fact1".to_string());
