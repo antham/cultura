@@ -25,3 +25,4 @@ dyn-clone = "1.0.11"
 
 [dev-dependencies]
 tempfile = "3.5.0"
+rand = "0.8.5"

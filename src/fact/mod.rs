@@ -128,11 +128,11 @@ impl<'a> Fact<'a> {
 mod tests {
     use std::fs;
 
+    use super::*;
+    use rand::{distributions::Alphanumeric, Rng};
     use rusqlite::Connection;
     use serde::{Deserialize, Serialize};
     use tempfile::tempdir;
-
-    use super::*;
 
     #[derive(Serialize, Deserialize, Clone)]
     struct CrawlerMock {
@@ -150,12 +150,23 @@ mod tests {
         }
     }
 
+    fn generate_random_string(prefix: &str) -> String {
+        format!(
+            "{}-{}",
+            prefix,
+            rand::thread_rng()
+                .sample_iter(Alphanumeric)
+                .take(8)
+                .map(char::from)
+                .collect::<String>()
+        )
+    }
+
     #[test]
     fn test_update() {
-        let database_name = "update-fact";
+        let database_name = generate_random_string("update");
 
-        let _ = fs::remove_file(database_name);
-        let f = crate::db::Fact::new(database_name).unwrap();
+        let f = crate::db::Fact::new(database_name.as_str()).unwrap();
         let facts = vec![
             "whatever (whatever whatever) 1".to_string(),
             "whatever 2".to_string(),
@@ -180,10 +191,9 @@ mod tests {
 
     #[test]
     fn test_generate_random() {
-        let database_name = "generate-random-fact";
+        let database_name = &generate_random_string("generate_random");
 
-        let _ = fs::remove_file(database_name);
-        let f = crate::db::Fact::new(database_name).unwrap();
+        let f = crate::db::Fact::new(database_name.as_str()).unwrap();
         f.create(
             "til".to_string(),
             vec!["fact1".to_string(), "fact2".to_string()],
@@ -211,9 +221,8 @@ mod tests {
 
     #[test]
     fn test_generate_output() {
-        let database_name = "generate-random-fact";
-        let _ = fs::remove_file(database_name);
-        let f = crate::db::Fact::new(database_name).unwrap();
+        let database_name = &generate_random_string("generate_output");
+        let f = crate::db::Fact::new(database_name.as_str()).unwrap();
         let third_part_services = vec![];
         let config_resolver =
             ConfigResolver::new(Some(tempdir().unwrap().into_path()), false).unwrap();
