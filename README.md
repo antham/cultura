@@ -52,6 +52,8 @@ eval "$(cultura init zsh)"
 
 # Configuration
 
+The config can be edited with the provided commands or could be directly edited through the config file, run `cultura config get-config-file-path` to get the path of the config file.
+
 ## The fact rendering
 
 You can customize the way a fact is rendered by using the command `cultura config set-template`.

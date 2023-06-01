@@ -69,6 +69,8 @@ enum Config {
     SetTemplate { template: String },
     #[structopt(about = "Dump the current config")]
     Dump {},
+    #[structopt(about = "Get the path of the config file")]
+    GetConfigFilePath {},
 }
 
 fn main() {
@@ -131,6 +133,12 @@ fn main() {
         Command::ConfigRoot(conf) => match conf {
             Config::Dump {} => {
                 println!("{}", config_resolver.get_config())
+            }
+            Config::GetConfigFilePath {} => {
+                println!(
+                    "The config file path is located at {}",
+                    config_resolver.get_config_file_path()
+                )
             }
             Config::SetProviders { providers } => match config_resolver.set_providers(providers) {
                 Ok(_) => {

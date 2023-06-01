@@ -8,6 +8,7 @@ use std::{
 };
 
 use crate::third_part::{self, Crawler};
+const CONFIG_FILE_NAME: &str = "config.toml";
 const DATABASE_NAME: &str = "cultura.db";
 const DEFAULT_TEMPLATE: &str = r#"__Cultura__:magenta:bold
 
@@ -53,14 +54,14 @@ impl ConfigResolver {
                     enable_log: enable_debug,
                     ..ConfigResolver::default()
                 };
-                let config_file_path = c.resolve_relative_path("config.toml");
+                let config_file_path = c.resolve_relative_path(CONFIG_FILE_NAME);
 
                 DirBuilder::new()
                     .recursive(true)
                     .create(c.get_root_config_path())?;
 
                 if std::path::Path::new(&config_file_path).exists() {
-                    let s = fs::read_to_string(c.resolve_relative_path("config.toml"))?;
+                    let s = fs::read_to_string(c.resolve_relative_path(CONFIG_FILE_NAME))?;
                     c.config = RefCell::new(toml::from_str(s.as_str())?);
                     if c.config.borrow().providers.is_empty() {
                         c.config.borrow_mut().providers = third_part::get_available_providers()
@@ -90,6 +91,10 @@ impl ConfigResolver {
 
     pub fn get_config(&self) -> Config {
         self.config.borrow().clone()
+    }
+
+    pub fn get_config_file_path(&self) -> String {
+        self.resolve_relative_path(CONFIG_FILE_NAME)
     }
 
     pub fn set_template(&self, template: String) -> Result<(), Box<dyn Error>> {
@@ -169,7 +174,10 @@ impl ConfigResolver {
 
 fn save_config(config: Config, config_resolver: &ConfigResolver) -> Result<(), Box<dyn Error>> {
     let toml = toml::to_string(&config).unwrap();
-    fs::write(config_resolver.resolve_relative_path("config.toml"), toml)?;
+    fs::write(
+        config_resolver.resolve_relative_path(CONFIG_FILE_NAME),
+        toml,
+    )?;
     Ok(())
 }
 
