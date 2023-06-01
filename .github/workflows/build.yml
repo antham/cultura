@@ -6,6 +6,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  CLICOLOR_FORCE: true
 
 jobs:
   test:
@@ -22,7 +23,7 @@ jobs:
       - name: List
         run: find ./
       - name: Run units/functionals tests
-        run: cargo test --verbose
+        run: echo $TERM && cargo test --verbose
       - name: Run e2e tests
         run: ./e2e-test.sh
 
