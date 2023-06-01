@@ -23,11 +23,13 @@ impl Display for Config {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "providers => {:?}",
+            r#"providers => {:?}
+template  => {}"#,
             self.providers
                 .iter()
                 .map(|p| p.get_id())
                 .collect::<Vec<String>>(),
+            self.template,
         )
     }
 }
