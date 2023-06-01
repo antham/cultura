@@ -63,9 +63,7 @@ You can customize the way a fact is rendered by using the command `cultura confi
 Let see an example :
 
 ```
-__Cultura__:magenta:bold
-
-__|>__:cyan $fact:yellow
+__A new fact to__:cyan:bold __=>__ $fact:yellow
 ```
 
 Your text must be enclosed between 2 underscores, you can provide a color and use styles like in the example.
@@ -94,7 +92,7 @@ Available style and color :
 You can define which fact provider you want to use, default is to display all, if you want to customize which one to use do `cargo run config set-providers TIL,DYK`, it will use both `DYK` and `TIL` as fact provider.
 
 The available providers:
-| Provider | Site                                                     |
+| Provider | Site |
 |----------|----------------------------------------------------------|
-| DYK      | https://en.wikipedia.org/wiki/Wikipedia:Recent_additions |
-| TIL      | https://www.reddit.com/r/todayilearned/                  |
+| DYK | https://en.wikipedia.org/wiki/Wikipedia:Recent_additions |
+| TIL | https://www.reddit.com/r/todayilearned/ |

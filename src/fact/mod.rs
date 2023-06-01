@@ -231,6 +231,20 @@ mod tests {
             let fact = Fact::new(&config_resolver, &f, third_part_services.clone());
             let data = fact.generate_output("fact1".to_string());
 
+            assert_eq!(data, "\n\u{1b}[36m|>\u{1b}[0m \u{1b}[33mfact1\u{1b}[0m");
+        }
+        {
+            config_resolver
+                .set_template(
+                    r#"__Cultura__:magenta:bold
+
+__|>__:cyan $fact:yellow"#
+                        .to_string(),
+                )
+                .unwrap();
+            let fact = Fact::new(&config_resolver, &f, third_part_services.clone());
+            let data = fact.generate_output("fact1".to_string());
+
             assert_eq!(
                 data,
                 "\u{1b}[1;35mCultura\u{1b}[0m\n\n".to_owned()
