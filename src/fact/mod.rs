@@ -126,8 +126,6 @@ impl<'a> Fact<'a> {
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
-
     use super::*;
     use rand::{distributions::Alphanumeric, Rng};
     use rusqlite::Connection;
@@ -150,21 +148,22 @@ mod tests {
         }
     }
 
-    fn generate_random_string(prefix: &str) -> String {
+    fn generate_random_string(prefix: &str, suffix: &str) -> String {
         format!(
-            "{}-{}",
+            "{}-{}{}",
             prefix,
             rand::thread_rng()
                 .sample_iter(Alphanumeric)
                 .take(8)
                 .map(char::from)
-                .collect::<String>()
+                .collect::<String>(),
+            suffix,
         )
     }
 
     #[test]
     fn test_update() {
-        let database_name = generate_random_string("update");
+        let database_name = generate_random_string("update", ".sqlite");
 
         let f = crate::db::Fact::new(database_name.as_str()).unwrap();
         let facts = vec![
@@ -191,7 +190,7 @@ mod tests {
 
     #[test]
     fn test_generate_random() {
-        let database_name = &generate_random_string("generate_random");
+        let database_name = &generate_random_string("generate_random", ".sqlite");
 
         let f = crate::db::Fact::new(database_name.as_str()).unwrap();
         f.create(
@@ -221,7 +220,7 @@ mod tests {
 
     #[test]
     fn test_generate_output() {
-        let database_name = &generate_random_string("generate_output");
+        let database_name = &generate_random_string("generate_output", ".sqlite");
         let f = crate::db::Fact::new(database_name.as_str()).unwrap();
         let third_part_services = vec![];
         let config_resolver =
