@@ -70,29 +70,25 @@ Your text must be enclosed between 2 underscores, you can provide a color and us
 
 The `$fact` variable is a special one and will be interpolated with the fact.
 
-Available style and color :
+| Colors  | Styles    |
+|---------|-----------|
+| blue    | bold      |
+| red     | dimmed    |
+| green   | italic    |
+| black   | underline |
+| yellow  |           |
+| white   |           |
+| purple  |           |
+| cyan    |           |
+| magenta |           |
 
-- blue
-- red
-- green
-- black
-- yellow
-- white
-- purple
-- cyan
-- magenta
-
-- bold
-- dimmed
-- italic
-- underline
 
 ## The providers
 
 You can define which fact provider you want to use, default is to display all, if you want to customize which one to use do `cargo run config set-providers TIL,DYK`, it will use both `DYK` and `TIL` as fact provider.
 
 The available providers:
-| Provider | Site |
+| Provider | Site                                                     |
 |----------|----------------------------------------------------------|
-| DYK | https://en.wikipedia.org/wiki/Wikipedia:Recent_additions |
-| TIL | https://www.reddit.com/r/todayilearned/ |
+| DYK      | https://en.wikipedia.org/wiki/Wikipedia:Recent_additions |
+| TIL      | https://www.reddit.com/r/todayilearned/                  |
