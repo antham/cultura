@@ -54,6 +54,8 @@ eval "$(cultura init zsh)"
 
 The config can be edited with the provided commands or could be directly edited through the config file, run `cultura config get-config-file-path` to get the path of the config file.
 
+It must be necessary to stop the daemon to take the config in account, so simply run after finishing the edition, `cultura daemon stop`.
+
 ## The fact rendering
 
 You can customize the way a fact is rendered by using the command `cultura config set-template`.
