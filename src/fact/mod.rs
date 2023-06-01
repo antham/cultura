@@ -82,24 +82,13 @@ impl<'a> Fact<'a> {
 
     fn generate_output(&self, fact: String) -> String {
         let mut template = self.config_resolver.get_template();
-        let mut acc = String::new();
-        let mut data: Vec<String> = vec![];
-        let mut start_acc = false;
-        for (i, c) in template.to_string().chars().enumerate() {
-            if c == '_' || c == '$' {
-                start_acc = true;
-            }
-            if Regex::new(r"\s").unwrap().is_match(&c.to_string()) {
-                start_acc = false;
-            }
-            if start_acc {
-                acc.push(c);
-            }
-            if (i + 1 == template.len() || !start_acc) && acc.len() > 0 {
-                data.push(acc.to_owned());
-                acc.clear();
-            }
-        }
+        let t = template.clone();
+
+        let data = Regex::new(r"(?:__(?:.+?)__|\$fact)(?::[a-z]+)*")
+            .unwrap()
+            .find_iter(t.as_str())
+            .map(|s| s.as_str())
+            .collect::<Vec<&str>>();
 
         for d in data {
             let items = d.split(":").collect::<Vec<&str>>();
@@ -110,6 +99,7 @@ impl<'a> Fact<'a> {
                 .replace("$fact", fact.as_str())
                 .to_string()
                 .normal();
+
             for text_format in items.into_iter().skip(1) {
                 text_formatted = match text_format {
                     "blue" => text_formatted.blue(),
@@ -128,7 +118,7 @@ impl<'a> Fact<'a> {
                     _ => text_formatted.normal(),
                 };
             }
-            template = template.replace(d.as_str(), format!("{}", text_formatted).as_str());
+            template = template.replace(d, format!("{}", text_formatted).as_str());
         }
         template
     }
@@ -242,9 +232,33 @@ mod tests {
             config_resolver
                 .set_template("$fact:red".to_string())
                 .unwrap();
-            let fact = Fact::new(&config_resolver, &f, third_part_services);
+            let fact = Fact::new(&config_resolver, &f, third_part_services.clone());
             let data = fact.generate_output("fact1".to_string());
             assert_eq!(data, "\u{1b}[31mfact1\u{1b}[0m");
+        }
+        {
+            config_resolver
+                .set_template("__A text between space__:magenta:bold".to_string())
+                .unwrap();
+            let fact = Fact::new(&config_resolver, &f, third_part_services.clone());
+            let data = fact.generate_output("fact1".to_string());
+            assert_eq!(data, "\u{1b}[1;35mA text between space\u{1b}[0m");
+        }
+        {
+            config_resolver
+                .set_template("__ATextWithoutStyle__ __ATextWithStyles__:magenta".to_string())
+                .unwrap();
+            let fact = Fact::new(&config_resolver, &f, third_part_services.clone());
+            let data = fact.generate_output("fact1".to_string());
+            assert_eq!(data, "ATextWithoutStyle \u{1b}[35mATextWithStyles\u{1b}[0m");
+        }
+        {
+            config_resolver
+                .set_template("__A_text_with_dashes__:magenta".to_string())
+                .unwrap();
+            let fact = Fact::new(&config_resolver, &f, third_part_services.clone());
+            let data = fact.generate_output("fact1".to_string());
+            assert_eq!(data, "\u{1b}[35mA_text_with_dashes\u{1b}[0m");
         }
     }
 }
