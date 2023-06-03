@@ -24,7 +24,12 @@ impl TIL {
 #[typetag::serde]
 impl Crawler for TIL {
     fn get_facts(&self) -> Result<Vec<String>, Box<dyn Error>> {
-        let body = reqwest::blocking::get(&self.url)?;
+        let client = reqwest::blocking::Client::builder()
+            .user_agent(
+                "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0",
+            )
+            .build()?;
+        let body = client.get(&self.url).send()?;
         let fragment = Html::parse_document(body.text()?.as_str());
         let selector = Selector::parse(r#"a[data-click-id="body"]"#).unwrap();
 
