@@ -79,6 +79,8 @@ enum Config {
 enum Doctor {
     #[structopt(about = "Stop the daemon and remove all cultura config and data")]
     Reset {},
+    #[structopt(about = "Check if providers are working by performing a call with them")]
+    RunProviders {},
 }
 
 fn main() {
@@ -172,6 +174,18 @@ fn main() {
                     Err(e) => logger.error(format!("cannot remove the config folder: {}", e)),
                 }
             }
+            Doctor::RunProviders {} => third_part::get_available_providers().iter().for_each(|i| {
+                println!(
+                    r#"Fetching provider {}
+  Found {} facts
+  Details
+    {:?}
+---"#,
+                    i.0,
+                    i.1.get_facts().unwrap().len(),
+                    i.1.get_facts().unwrap()
+                )
+            }),
         },
     }
 }
