@@ -1,4 +1,6 @@
-Cultura helps you to improve your culture day after day by showing little fact taken from reddit, wikipedia and so on.
+Cultura helps you to improve your culture :nerd_face: day after day by showing little fact taken from reddit, wikipedia and so on :book:.
+
+![example of cultura in a terminal](https://github.com/antham/cultura/blob/master/pictures/example.png?raw=true)
 
 # Install
 
