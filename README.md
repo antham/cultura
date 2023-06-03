@@ -103,3 +103,7 @@ You can reset the application by running `cultura doctor reset`, it will remove 
 ## Check the providers
 
 You can ensure providers are running properly by calling `cultura doctor run-providers`, you will see for each provider if the parser is working properly.
+
+# Submitting a new provider
+
+If you have an idea of a source of fact that could be added to cultura open an issue and let discuss about it.
