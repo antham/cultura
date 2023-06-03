@@ -92,3 +92,12 @@ The available providers:
 |----------|----------------------------------------------------------|
 | DYK      | https://en.wikipedia.org/wiki/Wikipedia:Recent_additions |
 | TIL      | https://www.reddit.com/r/todayilearned/                  |
+# Troubleshoot
+
+## Reset the application
+
+You can reset the application by running `cultura doctor reset`, it will remove the whole existing config and database.
+
+## Check the providers
+
+You can ensure providers are running properly by calling `cultura doctor run-providers`, you will see for each provider if the parser is working properly.
