@@ -71,3 +71,30 @@ if [[ $(pgrep -c -f cultura || true) -ne 0 ]]; then
     echo "The daemon stop command failed"
     exit 1
 fi
+
+echo "Start again the daemon"
+
+cargo run -- -e true daemon start
+
+cultura_process_count=$(pgrep -c -f cultura)
+
+if [ "$cultura_process_count" -eq 1 ]; then
+    echo "The daemon is started"
+else
+    echo "The daemon is not properly started"
+    exit 1
+fi
+
+echo "Run the doctor reset command"
+
+cargo run -- -e true doctor reset
+
+if [[ $(pgrep -c -f cultura || true) -ne 0 ]]; then
+    echo "The daemon stop command failed"
+    exit 1
+fi
+
+if [[ -d ~/.config/cultura ]]; then
+    echo "The config folder is not removed"
+    exit 1
+fi

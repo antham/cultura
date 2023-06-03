@@ -35,6 +35,8 @@ enum Command {
     InitRoot(Shell),
     #[structopt(name = "config", about = "Manage the configuration of the app")]
     ConfigRoot(Config),
+    #[structopt(name = "doctor", about = "Troubleshoot issues with cultura")]
+    DoctorRoot(Doctor),
 }
 
 #[derive(StructOpt, Debug)]
@@ -71,6 +73,12 @@ enum Config {
     Dump {},
     #[structopt(about = "Get the path of the config file")]
     GetConfigFilePath {},
+}
+
+#[derive(StructOpt, Debug)]
+enum Doctor {
+    #[structopt(about = "Stop the daemon and remove all cultura config and data")]
+    Reset {},
 }
 
 fn main() {
@@ -117,7 +125,7 @@ fn main() {
             }
             Daemon::Stop {} => {
                 match daemon::Daemon::new(&config_resolver, &fact_service).map(|d| d.stop()) {
-                    Ok(_) => (),
+                    Ok(_) => println!("stop the daemon"),
                     Err(e) => logger.error(format!("cannot stop daemon: {}", e)),
                 }
             }
@@ -152,6 +160,18 @@ fn main() {
                 }
                 Err(e) => logger.error(format!("cannot set the template: {}", e)),
             },
+        },
+        Command::DoctorRoot(doctor) => match doctor {
+            Doctor::Reset {} => {
+                match daemon::Daemon::new(&config_resolver, &fact_service).map(|d| d.stop()) {
+                    Ok(_) => println!("* stop the daemon"),
+                    Err(e) => logger.error(format!("cannot stop daemon: {}", e)),
+                }
+                match config_resolver.clear_all() {
+                    Ok(_) => println!("* config folder deleted"),
+                    Err(e) => logger.error(format!("cannot remove the config folder: {}", e)),
+                }
+            }
         },
     }
 }

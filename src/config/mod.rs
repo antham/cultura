@@ -169,6 +169,11 @@ impl ConfigResolver {
     pub fn is_log_enabled(&self) -> bool {
         self.enable_log
     }
+
+    pub fn clear_all(&self) -> Result<(), Box<dyn Error>> {
+        fs::remove_dir_all(self.get_root_config_path())?;
+        Ok(())
+    }
 }
 
 fn save_config(config: Config, config_resolver: &ConfigResolver) -> Result<(), Box<dyn Error>> {
