@@ -4,7 +4,7 @@
 
 echo "Start the daemon"
 
-cargo run -- -e true daemon start
+cargo run -- daemon start
 
 cultura_process_count=$(pgrep -c -f cultura)
 
@@ -39,10 +39,6 @@ echo
 echo "Check the config file exists"
 stat ~/.config/cultura/config.toml
 
-echo "Dump logs"
-cat ~/.config/cultura/stdout.log
-cat ~/.config/cultura/stderr.log
-
 echo
 
 echo "Dump config"
@@ -74,7 +70,7 @@ fi
 
 echo "Start again the daemon"
 
-cargo run -- -e true daemon start
+cargo run -- daemon start
 
 cultura_process_count=$(pgrep -c -f cultura)
 
@@ -87,7 +83,7 @@ fi
 
 echo "Run the doctor reset command"
 
-cargo run -- -e true doctor reset
+cargo run -- doctor reset
 
 if [[ $(pgrep -c -f cultura || true) -ne 0 ]]; then
     echo "The daemon stop command failed"

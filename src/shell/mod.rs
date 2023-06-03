@@ -1,12 +1,8 @@
-use crate::config::ConfigResolver;
+pub struct Shell {}
 
-pub struct Shell<'a> {
-    config_resolver: &'a ConfigResolver,
-}
-
-impl<'a> Shell<'a> {
-    pub fn new(config_resolver: &'a ConfigResolver) -> Shell {
-        Shell { config_resolver }
+impl Shell {
+    pub fn new() -> Shell {
+        Shell {}
     }
 
     pub fn generate_fish_config(self) {
@@ -29,15 +25,8 @@ end
     }
 
     fn generate_commands(self) -> String {
-        let log_flag = if self.config_resolver.is_log_enabled() {
-            "-e true"
-        } else {
-            ""
-        };
-        format!(
-            r#"cultura {} daemon start
-cultura {} fact generate-random"#,
-            log_flag, log_flag,
-        )
+        r#"cultura daemon start
+cultura fact generate-random"#
+            .to_string()
     }
 }

@@ -6,6 +6,8 @@ use nix::{
     unistd::Pid,
 };
 
+const STDOUT: &str = "/dev/null";
+const STDERR: &str = "/dev/null";
 use crate::{config::ConfigResolver, fact::Fact};
 
 pub struct Daemon<'a> {
@@ -14,22 +16,16 @@ pub struct Daemon<'a> {
 }
 
 impl<'a> Daemon<'a> {
-    pub fn new(
-        config_resolver: &'a ConfigResolver,
-        fact: &'a Fact,
-    ) -> Result<Daemon<'a>, Box<dyn Error>> {
-        File::create(config_resolver.get_stdout_file())?;
-        File::create(config_resolver.get_stderr_file())?;
-
-        Ok(Daemon {
+    pub fn new(config_resolver: &'a ConfigResolver, fact: &'a Fact) -> Daemon<'a> {
+        Daemon {
             config_resolver,
             fact,
-        })
+        }
     }
 
     pub fn start(&self) -> Result<(), Box<dyn Error>> {
-        let stdout = File::open(self.config_resolver.get_stdout_file())?;
-        let stderr = File::open(self.config_resolver.get_stderr_file())?;
+        let stdout = File::open(STDOUT)?;
+        let stderr = File::open(STDERR)?;
 
         Daemonize::new()
             .pid_file(self.config_resolver.get_pid_file())

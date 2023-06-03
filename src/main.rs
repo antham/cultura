@@ -1,5 +1,6 @@
 use std::process::exit;
 
+use log::error;
 use structopt::StructOpt;
 use third_part::Crawler;
 
@@ -7,7 +8,6 @@ mod config;
 mod daemon;
 mod db;
 mod fact;
-mod logger;
 mod shell;
 mod third_part;
 
@@ -21,8 +21,6 @@ mod third_part;
 struct Cultura {
     #[structopt(subcommand)]
     command: Command,
-    #[structopt(global = true, short, long, env = "ENABLE_LOG")]
-    enable_log: bool,
 }
 
 #[derive(StructOpt, Debug)]
@@ -86,14 +84,12 @@ enum Doctor {
 fn main() {
     let a = Cultura::from_args();
 
-    let logger = logger::Logger::new(a.enable_log);
-
-    let config_resolver_result = config::ConfigResolver::new(home::home_dir(), a.enable_log);
+    let config_resolver_result = config::ConfigResolver::new(home::home_dir());
     if config_resolver_result.is_err() {
-        logger.error(format!(
+        error!(
             "cannot bootstrap the config: {}",
             config_resolver_result.err().unwrap()
-        ));
+        );
         exit(0);
     }
     let config_resolver = config_resolver_result.unwrap();
@@ -102,10 +98,10 @@ fn main() {
 
     let fact_repository_result = crate::db::Fact::new(&config_resolver.get_database_path());
     if fact_repository_result.is_err() {
-        logger.error(format!(
+        error!(
             "cannot bootstrap the fact repository: {}",
             fact_repository_result.err().unwrap()
-        ));
+        );
         exit(0);
     }
     let fact_repository = fact_repository_result.unwrap();
@@ -115,25 +111,23 @@ fn main() {
         Command::FactRoot(provider) => match provider {
             Fact::GenerateRandom {} => match fact_service.print_random() {
                 Ok(_) => (),
-                Err(e) => logger.error(format!("an error occurred when printing fact: {}", e)),
+                Err(e) => error!("an error occurred when printing fact: {}", e),
             },
         },
         Command::DaemonRoot(daemon) => match daemon {
             Daemon::Start {} => {
-                match daemon::Daemon::new(&config_resolver, &fact_service).map(|d| d.start()) {
+                match daemon::Daemon::new(&config_resolver, &fact_service).start() {
                     Ok(_) => (),
-                    Err(e) => logger.error(format!("cannot start daemon: {}", e)),
+                    Err(e) => error!("cannot start daemon: {}", e),
                 }
             }
-            Daemon::Stop {} => {
-                match daemon::Daemon::new(&config_resolver, &fact_service).map(|d| d.stop()) {
-                    Ok(_) => println!("stop the daemon"),
-                    Err(e) => logger.error(format!("cannot stop daemon: {}", e)),
-                }
-            }
+            Daemon::Stop {} => match daemon::Daemon::new(&config_resolver, &fact_service).stop() {
+                Ok(_) => println!("stop the daemon"),
+                Err(e) => error!("cannot stop daemon: {}", e),
+            },
         },
         Command::InitRoot(shell) => {
-            let s = shell::Shell::new(&config_resolver);
+            let s = shell::Shell::new();
             match shell {
                 Shell::Fish {} => s.generate_fish_config(),
                 Shell::Bash {} => s.generate_bash_config(),
@@ -154,24 +148,24 @@ fn main() {
                 Ok(_) => {
                     println!("providers defined");
                 }
-                Err(e) => logger.error(format!("cannot set the providers: {}", e)),
+                Err(e) => error!("cannot set the providers: {}", e),
             },
             Config::SetTemplate { template } => match config_resolver.set_template(template) {
                 Ok(_) => {
                     println!("template defined");
                 }
-                Err(e) => logger.error(format!("cannot set the template: {}", e)),
+                Err(e) => error!("cannot set the template: {}", e),
             },
         },
         Command::DoctorRoot(doctor) => match doctor {
             Doctor::Reset {} => {
-                match daemon::Daemon::new(&config_resolver, &fact_service).map(|d| d.stop()) {
+                match daemon::Daemon::new(&config_resolver, &fact_service).stop() {
                     Ok(_) => println!("* stop the daemon"),
-                    Err(e) => logger.error(format!("cannot stop daemon: {}", e)),
+                    Err(e) => error!("cannot stop daemon: {}", e),
                 }
                 match config_resolver.clear_all() {
                     Ok(_) => println!("* config folder deleted"),
-                    Err(e) => logger.error(format!("cannot remove the config folder: {}", e)),
+                    Err(e) => error!("cannot remove the config folder: {}", e),
                 }
             }
             Doctor::RunProviders {} => third_part::get_available_providers().iter().for_each(|i| {
@@ -180,7 +174,8 @@ fn main() {
   Found {} facts
   Details
     {:?}
----"#,
+---
+"#,
                     i.0,
                     i.1.get_facts().unwrap().len(),
                     i.1.get_facts().unwrap()

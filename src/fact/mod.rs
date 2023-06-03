@@ -171,8 +171,7 @@ mod tests {
             "whatever 2".to_string(),
         ];
         let third_part_services: Vec<Box<dyn Crawler>> = vec![Box::new(CrawlerMock { facts })];
-        let config_resolver =
-            ConfigResolver::new(Some(tempdir().unwrap().into_path()), false).unwrap();
+        let config_resolver = ConfigResolver::new(Some(tempdir().unwrap().into_path())).unwrap();
         let fact = Fact::new(&config_resolver, &f, third_part_services);
         fact.update().unwrap();
 
@@ -198,8 +197,7 @@ mod tests {
             vec!["fact1".to_string(), "fact2".to_string()],
         );
         let third_part_services = vec![];
-        let config_resolver =
-            ConfigResolver::new(Some(tempdir().unwrap().into_path()), false).unwrap();
+        let config_resolver = ConfigResolver::new(Some(tempdir().unwrap().into_path())).unwrap();
 
         let fact = Fact::new(&config_resolver, &f, third_part_services);
 
@@ -223,8 +221,7 @@ mod tests {
         let database_name = &generate_random_string("generate_output", ".sqlite");
         let f = crate::db::Fact::new(database_name.as_str()).unwrap();
         let third_part_services = vec![];
-        let config_resolver =
-            ConfigResolver::new(Some(tempdir().unwrap().into_path()), false).unwrap();
+        let config_resolver = ConfigResolver::new(Some(tempdir().unwrap().into_path())).unwrap();
 
         {
             let fact = Fact::new(&config_resolver, &f, third_part_services.clone());

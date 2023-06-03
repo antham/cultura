@@ -37,20 +37,15 @@ template  => {}"#,
 #[derive(Clone, Default)]
 pub struct ConfigResolver {
     home_dir: String,
-    enable_log: bool,
     config: RefCell<Config>,
 }
 
 impl ConfigResolver {
-    pub fn new(
-        path: Option<PathBuf>,
-        enable_debug: bool,
-    ) -> Result<ConfigResolver, Box<dyn Error>> {
+    pub fn new(path: Option<PathBuf>) -> Result<ConfigResolver, Box<dyn Error>> {
         match path {
             Some(path) => {
                 let mut c = ConfigResolver {
                     home_dir: path.display().to_string(),
-                    enable_log: enable_debug,
                     ..ConfigResolver::default()
                 };
                 let config_file_path = c.resolve_relative_path(CONFIG_FILE_NAME);
@@ -146,28 +141,8 @@ impl ConfigResolver {
         "/tmp"
     }
 
-    pub fn get_stdout_file(&self) -> String {
-        if self.enable_log {
-            self.resolve_relative_path("stdout.log").to_string()
-        } else {
-            "/dev/null".to_string()
-        }
-    }
-
-    pub fn get_stderr_file(&self) -> String {
-        if self.enable_log {
-            self.resolve_relative_path("stderr.log").to_string()
-        } else {
-            "/dev/null".to_string()
-        }
-    }
-
     pub fn get_scheduler_interval_as_minutes(&self) -> u64 {
         5
-    }
-
-    pub fn is_log_enabled(&self) -> bool {
-        self.enable_log
     }
 
     pub fn clear_all(&self) -> Result<(), Box<dyn Error>> {
@@ -195,10 +170,9 @@ mod tests {
     #[test]
     fn test_config_resolver() {
         {
-            let c = ConfigResolver::new(Some(tempdir().unwrap().into_path()), false);
+            let c = ConfigResolver::new(Some(tempdir().unwrap().into_path()));
             match c {
                 Ok(config) => {
-                    assert!(config.enable_log == false);
                     assert!(
                         Regex::new(r"^.*?/.config/cultura$")
                             .unwrap()
@@ -220,32 +194,6 @@ mod tests {
                         "pid_file = {}",
                         &config.get_database_path(),
                     );
-                    assert_eq!(&config.get_stdout_file(), "/dev/null");
-                    assert_eq!(&config.get_stderr_file(), "/dev/null");
-                }
-                Err(e) => panic!("{}", e),
-            }
-        }
-
-        {
-            let c = ConfigResolver::new(Some(tempdir().unwrap().into_path()), true);
-            match c {
-                Ok(config) => {
-                    assert!(config.enable_log == true);
-                    assert!(
-                        Regex::new(r"^.*?/.config/cultura/stdout.log$")
-                            .unwrap()
-                            .is_match(&config.get_stdout_file()),
-                        "stdout_file = {}",
-                        &config.get_stdout_file(),
-                    );
-                    assert!(
-                        Regex::new(r"^.*?/.config/cultura/stderr.log$")
-                            .unwrap()
-                            .is_match(&config.get_stderr_file()),
-                        "stderr_file = {}",
-                        &config.get_stderr_file(),
-                    );
                 }
                 Err(e) => panic!("{}", e),
             }
@@ -254,7 +202,7 @@ mod tests {
 
     #[test]
     fn test_accessors_providers() {
-        let c = ConfigResolver::new(Some(tempdir().unwrap().into_path()), false).unwrap();
+        let c = ConfigResolver::new(Some(tempdir().unwrap().into_path())).unwrap();
         match c.set_providers(vec!["whatever".to_string()]) {
             Err(e) => assert_eq!(e.to_string(), "some providers are invalid"),
             Ok(_) => panic!("must return an error"),
@@ -268,7 +216,7 @@ mod tests {
         assert_eq!(c.get_providers().len(), 1);
         assert_eq!(c.get_providers().first().unwrap().get_id(), "TIL");
 
-        let c2 = ConfigResolver::new(Some(tempdir().unwrap().into_path()), false).unwrap();
+        let c2 = ConfigResolver::new(Some(tempdir().unwrap().into_path())).unwrap();
         assert_eq!(c2.get_providers().len(), 0);
     }
 }
