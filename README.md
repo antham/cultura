@@ -65,15 +65,15 @@ You can customize the way a fact is rendered by using the command `cultura confi
 Let see an example :
 
 ```
-__A new fact to__:cyan:bold __=>__ $fact:yellow
+__A new fact__:cyan:bold __=>__ $fact:yellow
 ```
 
-Your text must be enclosed between 2 underscores, you can provide a color and use styles like in the example.
+Your text must be enclosed between 4 underscores, you can provide a color and use styles like in the example.
 
 The `$fact` variable is a special one and will be interpolated with the fact.
 
 | Colors  | Styles    |
-|---------|-----------|
+| ------- | --------- |
 | blue    | bold      |
 | red     | dimmed    |
 | green   | italic    |
@@ -87,7 +87,7 @@ The `$fact` variable is a special one and will be interpolated with the fact.
 
 ## The providers
 
-You can define which fact provider you want to use, default is to display all, if you want to customize which one to use do `cargo run config set-providers TIL,DYK`, it will use both `DYK` and `TIL` as fact provider.
+You can define which fact provider you want to use, default is to display all, if you want to customize which one to use for instance do `cargo run config set-providers TIL,DYK` and it will use both `DYK` and `TIL` as fact provider.
 
 The available providers:
 | Provider | Site                                                     |
