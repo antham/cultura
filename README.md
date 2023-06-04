@@ -2,6 +2,15 @@ Cultura helps you to improve your culture :nerd_face: day after day by showing l
 
 ![example of cultura in a terminal](https://github.com/antham/cultura/blob/master/pictures/example.png?raw=true)
 
+---
+
+- [Install](#install)
+- [Configuration](#configuration)
+- [Troubleshoot](#troubleshoot)
+- [Submitting a new provider](#submitting-a-new-provider)
+
+---
+
 # Install
 
 ## How to install
