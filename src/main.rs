@@ -1,6 +1,5 @@
 use std::process::exit;
 
-use log::error;
 use structopt::StructOpt;
 use third_part::Crawler;
 
@@ -46,7 +45,7 @@ enum Fact {
 #[derive(StructOpt, Debug)]
 enum Daemon {
     #[structopt(about = "Start the daemon")]
-    Start {},
+    Start { run_in_foreground: Option<bool> },
     #[structopt(about = "Stop the daemon")]
     Stop {},
 }
@@ -86,7 +85,7 @@ fn main() {
 
     let config_resolver_result = config::ConfigResolver::new(home::home_dir());
     if config_resolver_result.is_err() {
-        error!(
+        eprintln!(
             "cannot bootstrap the config: {}",
             config_resolver_result.err().unwrap()
         );
@@ -98,7 +97,7 @@ fn main() {
 
     let fact_repository_result = crate::db::Fact::new(&config_resolver.get_database_path());
     if fact_repository_result.is_err() {
-        error!(
+        eprintln!(
             "cannot bootstrap the fact repository: {}",
             fact_repository_result.err().unwrap()
         );
@@ -111,19 +110,21 @@ fn main() {
         Command::FactRoot(provider) => match provider {
             Fact::GenerateRandom {} => match fact_service.print_random() {
                 Ok(_) => (),
-                Err(e) => error!("an error occurred when printing fact: {}", e),
+                Err(e) => eprintln!("an error occurred when printing fact: {}", e),
             },
         },
         Command::DaemonRoot(daemon) => match daemon {
-            Daemon::Start {} => {
-                match daemon::Daemon::new(&config_resolver, &fact_service).start() {
+            Daemon::Start { run_in_foreground } => {
+                match daemon::Daemon::new(&config_resolver, &fact_service)
+                    .start(run_in_foreground.unwrap_or_default())
+                {
                     Ok(_) => (),
-                    Err(e) => error!("cannot start daemon: {}", e),
+                    Err(e) => eprintln!("cannot start daemon: {}", e),
                 }
             }
             Daemon::Stop {} => match daemon::Daemon::new(&config_resolver, &fact_service).stop() {
-                Ok(_) => println!("stop the daemon"),
-                Err(e) => error!("cannot stop daemon: {}", e),
+                Ok(_) => println!("daemon stopped"),
+                Err(e) => eprintln!("cannot stop daemon: {}", e),
             },
         },
         Command::InitRoot(shell) => {
@@ -148,24 +149,24 @@ fn main() {
                 Ok(_) => {
                     println!("providers defined");
                 }
-                Err(e) => error!("cannot set the providers: {}", e),
+                Err(e) => eprintln!("cannot set the providers: {}", e),
             },
             Config::SetTemplate { template } => match config_resolver.set_template(template) {
                 Ok(_) => {
                     println!("template defined");
                 }
-                Err(e) => error!("cannot set the template: {}", e),
+                Err(e) => eprintln!("cannot set the template: {}", e),
             },
         },
         Command::DoctorRoot(doctor) => match doctor {
             Doctor::Reset {} => {
                 match daemon::Daemon::new(&config_resolver, &fact_service).stop() {
                     Ok(_) => println!("* stop the daemon"),
-                    Err(e) => error!("cannot stop daemon: {}", e),
+                    Err(e) => eprintln!("cannot stop daemon: {}", e),
                 }
                 match config_resolver.clear_all() {
                     Ok(_) => println!("* config folder deleted"),
-                    Err(e) => error!("cannot remove the config folder: {}", e),
+                    Err(e) => eprintln!("cannot remove the config folder: {}", e),
                 }
             }
             Doctor::RunProviders {} => third_part::get_available_providers().iter().for_each(|i| {

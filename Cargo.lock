@@ -211,7 +211,6 @@ dependencies = [
  "daemonize",
  "dyn-clone",
  "home",
- "log",
  "nix",
  "rand 0.8.5",
  "regex",

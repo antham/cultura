@@ -23,17 +23,19 @@ impl<'a> Daemon<'a> {
         }
     }
 
-    pub fn start(&self) -> Result<(), Box<dyn Error>> {
+    pub fn start(&self, run_in_foreground: bool) -> Result<(), Box<dyn Error>> {
         let stdout = File::open(STDOUT)?;
         let stderr = File::open(STDERR)?;
 
-        Daemonize::new()
-            .pid_file(self.config_resolver.get_pid_file())
-            .working_directory(self.config_resolver.get_working_dir())
-            .stdout(stdout)
-            .stderr(stderr)
-            .privileged_action(|| "Executed before drop privileges")
-            .start()?;
+        if !run_in_foreground {
+            Daemonize::new()
+                .pid_file(self.config_resolver.get_pid_file())
+                .working_directory(self.config_resolver.get_working_dir())
+                .stdout(stdout)
+                .stderr(stderr)
+                .privileged_action(|| "Executed before drop privileges")
+                .start()?;
+        }
 
         loop {
             self.fact.update()?;

@@ -96,13 +96,17 @@ The available providers:
 | TIL      | https://www.reddit.com/r/todayilearned/                  |
 # Troubleshoot
 
-## Reset the application
+## Debugging issues on the daemon
 
-You can reset the application by running `cultura doctor reset`, it will remove the whole existing config and database.
+Run `cultura daemon start true` to start the daemon in foreground and check for errors.
 
 ## Check the providers
 
 You can ensure providers are running properly by calling `cultura doctor run-providers`, you will see for each provider if the parser is working properly.
+
+## Reset the application
+
+You can reset the application by running `cultura doctor reset`, it will remove the whole existing config and database.
 
 # Submitting a new provider
 
