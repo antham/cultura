@@ -27,21 +27,32 @@ impl<'a> Daemon<'a> {
         let stdout = File::open(STDOUT)?;
         let stderr = File::open(STDERR)?;
 
-        if !run_in_foreground {
-            Daemonize::new()
+        let run = if !run_in_foreground {
+            let r = Daemonize::new()
                 .pid_file(self.config_resolver.get_pid_file())
                 .working_directory(self.config_resolver.get_working_dir())
                 .stdout(stdout)
                 .stderr(stderr)
                 .privileged_action(|| "Executed before drop privileges")
-                .start()?;
-        }
+                .start();
+            match r {
+                Ok(_) => true,
+                Err(e) if e.to_string().contains("errno 11") => false,
+                Err(e) => Err(e)?,
+            }
+        } else {
+            true
+        };
 
-        loop {
-            self.fact.update()?;
-            thread::sleep(Duration::from_secs(
-                60 * self.config_resolver.get_scheduler_interval_as_minutes(),
-            ));
+        if run {
+            loop {
+                self.fact.update()?;
+                thread::sleep(Duration::from_secs(
+                    60 * self.config_resolver.get_scheduler_interval_as_minutes(),
+                ));
+            }
+        } else {
+            Ok(())
         }
     }
 
