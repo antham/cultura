@@ -11,7 +11,8 @@ use crate::third_part::{self, Crawler};
 const CONFIG_FILE_NAME: &str = "config.toml";
 const DATABASE_NAME: &str = "cultura.db";
 const DEFAULT_TEMPLATE: &str = r#"
-__|>__:cyan $fact:yellow"#;
+__|>__:cyan $fact:yellow
+"#;
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct Config {
