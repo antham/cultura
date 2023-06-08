@@ -5,6 +5,8 @@ use regex::Regex;
 
 use crate::{config::ConfigResolver, db, third_part::Crawler};
 
+const NO_FACT_MESSAGES: &str = "Stay tuned for more fascinating facts soon";
+
 pub struct Fact<'a> {
     config_resolver: &'a ConfigResolver,
     fact: &'a db::Fact,
@@ -25,9 +27,7 @@ impl<'a> Fact<'a> {
     }
 
     pub fn print_random(&self) -> Result<(), Box<dyn Error>> {
-        self.generate_random()?.map(|fact| {
-            println!("{}", self.generate_output(fact));
-        });
+        println!("{}", self.generate_output(self.generate_random()?));
         Ok(())
     }
 
@@ -68,15 +68,15 @@ impl<'a> Fact<'a> {
             })
     }
 
-    fn generate_random(&self) -> Result<Option<String>, Box<dyn Error>> {
+    fn generate_random(&self) -> Result<String, Box<dyn Error>> {
         let data = self.fact.get_random_fact()?;
 
         Ok(match data {
             Some((id, fact)) => {
                 self.fact.mark_as_read(id)?;
-                Some(fact)
+                fact
             }
-            None => None,
+            None => NO_FACT_MESSAGES.to_string(),
         })
     }
 
@@ -205,15 +205,15 @@ mod tests {
 
         let f1 = fact.generate_random();
         assert!(f1.is_ok());
-        facts.push(f1.ok().unwrap().unwrap());
+        facts.push(f1.ok().unwrap());
 
         let f2 = fact.generate_random();
         assert!(f2.is_ok());
-        facts.push(f2.ok().unwrap().unwrap());
+        facts.push(f2.ok().unwrap());
 
         let f3 = fact.generate_random();
         assert!(f3.is_ok());
-        assert!(f3.ok().unwrap() == None);
+        assert!(f3.ok().unwrap() == NO_FACT_MESSAGES);
     }
 
     #[test]
