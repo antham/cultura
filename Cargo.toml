@@ -1,7 +1,7 @@
 [package]
 name = "cultura"
 description = "Enhance your knowledge day by day, directly from your terminal"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 authors = ["Anthony HAMON <hamon.anth@gmail.com>"]
 license = "MIT"
