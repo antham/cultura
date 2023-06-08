@@ -1,4 +1,4 @@
-Cultura helps you to improve your culture :nerd_face: day after day by showing little fact taken from reddit, wikipedia and so on :book:.
+Cultura helps you to improve your culture :nerd_face: day after day by providing interesting fact taken from various sources such as reddit, wikipedia and so on :book:.
 
 ![example of cultura in a terminal](https://github.com/antham/cultura/blob/master/pictures/example.png?raw=true)
 
@@ -29,11 +29,11 @@ Download the binary from the release page => https://github.com/antham/cultura/r
 
 ### From docker
 
-Pull the image from `docker.io/antham/cultura`.
+Pull the image from `docker.io/antham/cultura`, see [the shell config section](#shell-config) for more information.
 
 ## Shell config
 
-You must setup cultura in your shell, look at the following configuration corresponding to your shell.
+To set up Cultura in your shell, please refer to the following configuration specific to your shell
 
 ### Bash
 
@@ -89,7 +89,7 @@ The config can be edited with the provided commands or could be directly edited 
 
 It must be necessary to stop the daemon to take the config in account, so simply run after finishing the edition, `cultura daemon stop`.
 
-With docker, simply replace the command cultura with `docker exec cultura-af2fce60 cultura`, the container must be started.
+If you are using cultura with Docker, you can replace the cultura command with `docker exec cultura-af2fce60 cultura`. Make sure the container is already running before executing the command.
 
 ## The fact rendering
 
@@ -161,4 +161,4 @@ With docker:
 
 # Submitting a new provider
 
-If you have an idea of a source of fact that could be added to cultura open an issue and let discuss about it.
+If you have an idea for a source of facts that could be added to cultura, feel free to create an issue and provide the necessary details and reasoning behind your suggestion.
