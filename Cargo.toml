@@ -1,7 +1,12 @@
 [package]
 name = "cultura"
+description = "Enhance your knowledge day by day, directly from your terminal"
 version = "0.1.0"
 edition = "2021"
+authors = ["Anthony HAMON <hamon.anth@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/antham/cultura"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
