@@ -42,7 +42,7 @@ It could depend how bash is setup.
 In your bash config file add:
 
 ```
-eval "$(cultura init bash)"
+source <(cultura init bash)
 ```
 
 If you use the docker container, download the file `scripts/docker.bash` and in your bash config file add:
@@ -72,7 +72,7 @@ It could depend how zsh is setup.
 In your zsh config file add:
 
 ```
-eval "$(cultura init zsh)"
+source <(cultura init zsh)
 ```
 
 If you use the docker container, download the file `scripts/docker.zsh` and in your zsh config file add:
