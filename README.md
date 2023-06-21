@@ -23,6 +23,8 @@ Run :
 cargo install cultura
 ```
 
+:warning: It could be necessary to install the `libssl-dev` package.
+
 ### From GitHub
 
 Download the binary from the release page => https://github.com/antham/cultura/releases/latest and install it in your binary path.
